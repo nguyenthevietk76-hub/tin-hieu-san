@@ -2,3 +2,4 @@ app/node_modules/
 app/dist/
 pipeline/cache/
 __pycache__/
+pipeline/ext/vci_raw/

@@ -196,6 +196,22 @@ export function SortTh<K extends string>({ k, sort, setSort, children, className
   );
 }
 
+/** Sorting for phones, where card-style tables hide their sortable headers. */
+export function SortSelect<K extends string>({ options, sort, setSort }: {
+  options: Array<[K, string]>; sort: [K, 1 | -1]; setSort: (s: [K, 1 | -1]) => void;
+}) {
+  return (
+    <div className="sort-sm only-sm">
+      <select className="select" value={sort[0]} onChange={(e) => setSort([e.target.value as K, -1])} aria-label="Sắp xếp theo">
+        {options.map(([k, l]) => <option key={k} value={k}>Sắp xếp: {l}</option>)}
+      </select>
+      <button className="btn" onClick={() => setSort([sort[0], (-sort[1]) as 1 | -1])} aria-label="Đảo chiều sắp xếp">
+        {sort[1] === -1 ? "Giảm dần ↓" : "Tăng dần ↑"}
+      </button>
+    </div>
+  );
+}
+
 export function sortBy<T>(rows: T[], key: keyof T, dir: 1 | -1) {
   return [...rows].sort((a, b) => {
     const x = a[key] as unknown, y = b[key] as unknown;

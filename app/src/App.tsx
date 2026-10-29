@@ -8,6 +8,7 @@ import { Industries } from "./pages/Industries";
 import { Watchlist } from "./pages/Watchlist";
 import { Methodology } from "./pages/Methodology";
 import { Compare } from "./pages/Compare";
+import { Finance } from "./pages/Finance";
 
 function NotFound() {
   return (
@@ -27,6 +28,7 @@ export function App() {
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="screener" element={<Screener />} />
+          <Route path="finance" element={<Finance />} />
           <Route path="c/:ticker" element={<CompanyPage />} />
           <Route path="events" element={<Events />} />
           <Route path="industries" element={<Industries />} />

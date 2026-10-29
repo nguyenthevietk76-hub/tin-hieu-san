@@ -82,7 +82,7 @@ export function Industries() {
       </div>
       <Card title="Bảng tổng hợp ngành" sub="Nhấn vào một ngành để mở bộ sàng lọc" pad={false} className="mt">
         <div className="table-wrap">
-          <table className="tbl">
+          <table className="tbl cards">
             <thead>
               <tr>
                 <SortTh k="industry_l1" sort={sort} setSort={setSort}>Ngành</SortTh>
@@ -99,15 +99,15 @@ export function Industries() {
             <tbody>
               {sortBy(rows, sort[0], sort[1]).map((r) => (
                 <tr key={r.industry_l1} className="click" onClick={() => nav(`/screener?ind=${encodeURIComponent(r.industry_l1)}`)}>
-                  <td style={{ fontWeight: 550 }}>{r.industry_l1}</td>
-                  <td className="r num">{fmtInt(r.firms)}</td>
-                  <td className="r num">{fmtInt(r.n)}</td>
-                  <td className="r num">{fmtPct(r.y1)}</td>
-                  <td className="r num">{fmtPct(r.y2)}</td>
-                  <td className="r num">{fmtPct(r.yall)}</td>
-                  <td className="r num">{fmtInt(r.listed)}</td>
-                  <td className="r num" style={{ fontWeight: r.vh ? 650 : undefined }}>{fmtInt(r.vh)}</td>
-                  <td className="r num">{fmtInt(r.status)}</td>
+                  <td className="full" style={{ fontWeight: 600 }}>{r.industry_l1}</td>
+                  <td className="r num" data-label="Số DN">{fmtInt(r.firms)}</td>
+                  <td className="r num" data-label="DN-năm">{fmtInt(r.n)}</td>
+                  <td className="r num" data-label="Tuân thủ">{fmtPct(r.y1)}</td>
+                  <td className="r num" data-label="Tài chính">{fmtPct(r.y2)}</td>
+                  <td className="r num" data-label="Mọi sự kiện">{fmtPct(r.yall)}</td>
+                  <td className="r num" data-label="Đang niêm yết">{fmtInt(r.listed)}</td>
+                  <td className="r num" data-label="Rủi ro rất cao" style={{ fontWeight: r.vh ? 650 : undefined }}>{fmtInt(r.vh)}</td>
+                  <td className="r num" data-label="Đang bị xử lý">{fmtInt(r.status)}</td>
                 </tr>
               ))}
             </tbody>

@@ -105,21 +105,21 @@ export function Events() {
             Gồm sự kiện khác
           </button>
         </div>
-        <div className="toolbar" style={{ gap: 6 }}>
+        <div className="toolbar chips" style={{ gap: 6 }}>
           <span className="xs faint" style={{ marginRight: 4 }}>NHÓM</span>
           {CODES.map((c) => (
-            <button key={c} className={`btn ${codes.includes(c) ? "on" : ""}`} style={{ height: 30, padding: "0 10px" }} onClick={() => toggle(c)}>
+            <button key={c} className={`btn ${codes.includes(c) ? "on" : ""}`} style={{ padding: "0 12px" }} onClick={() => toggle(c)}>
               <ECode code={c} /> <span className="small">{E_SHORT[c]}</span>
             </button>
           ))}
-          {codes.length > 0 && <button className="btn" style={{ height: 30 }} onClick={() => setCodes([])}>Bỏ chọn</button>}
+          {codes.length > 0 && <button className="btn" onClick={() => setCodes([])}>Bỏ chọn</button>}
         </div>
         {!data ? (
           <div className="card-body"><Loading h={480} /></div>
         ) : (
           <>
             <div className="table-wrap">
-              <table className="tbl">
+              <table className="tbl cards">
                 <thead>
                   <tr>
                     <th>Ngày</th>
@@ -135,11 +135,11 @@ export function Events() {
                   {view.map((e) => (
                     <Fragment key={e.id}>
                       <tr className="click" onClick={() => setOpen(open === e.id ? null : e.id)}>
-                        <td className="num small" style={{ whiteSpace: "nowrap" }}>{fmtDate(e.d)}</td>
-                        <td>
+                        <td className="num small hide-sm" style={{ whiteSpace: "nowrap" }}>{fmtDate(e.d)}</td>
+                        <td className="full">
                           <div className="firm">
                             <Avatar t={e.t} size={30} />
-                            <div style={{ minWidth: 0 }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
                               {e.in ? (
                                 <Link className="ticker" to={`/c/${e.t}`} onClick={(x) => x.stopPropagation()}>{e.t}</Link>
                               ) : (
@@ -147,16 +147,17 @@ export function Events() {
                               )}
                               <div className="co-name" style={{ maxWidth: 180 }}>{e.name}</div>
                             </div>
+                            <span className="num small muted only-sm">{fmtDate(e.d)}</span>
                           </div>
                         </td>
-                        <td><ECodes value={e.e} /></td>
-                        <td style={{ whiteSpace: "nowrap" }}>
+                        <td data-label="Nhóm"><ECodes value={e.e} /></td>
+                        <td data-label="Biện pháp" style={{ whiteSpace: "nowrap" }}>
                           {MEASURE[e.m] ?? e.m}
                           {e.dir === "nang_cap" && <div className="xs faint">{DIRECTION[e.dir]}</div>}
                         </td>
-                        <td className="small" style={{ maxWidth: 440, minWidth: 260 }}><div className={open === e.id ? "" : "clamp3"}>{e.why || <span className="faint">{e.title}</span>}</div></td>
-                        <td className="small muted">{AGENCY[e.ag] ?? e.ag}</td>
-                        <td className="small num" style={{ whiteSpace: "nowrap" }}>
+                        <td className="small full" style={{ maxWidth: 440, minWidth: 260 }}><div className={open === e.id ? "" : "clamp3"}>{e.why || <span className="faint">{e.title}</span>}</div></td>
+                        <td className="small muted" data-label="Cơ quan">{AGENCY[e.ag] ?? e.ag}</td>
+                        <td className="small num" data-label="Văn bản" style={{ whiteSpace: "nowrap" }}>
                           {e.urls[0] ? (
                             <a href={e.urls[0]} target="_blank" rel="noreferrer noopener" onClick={(x) => x.stopPropagation()}>
                               {(e.doc ?? "Văn bản").split(" ; ")[0]} <Icon name="external" size={11} />

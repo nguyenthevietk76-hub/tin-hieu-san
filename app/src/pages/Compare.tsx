@@ -4,7 +4,7 @@ import { Chart } from "../components/Chart";
 import { Card, Loading, RiskBadge, Seg, StatusBadge } from "../components/ui";
 import { Icon } from "../components/Icon";
 import { load, useCompanies } from "../lib/data";
-import { fmtDate, fmtInt, fold } from "../lib/format";
+import { fmtBn, fmtDate, fmtInt, fmtPct, fold } from "../lib/format";
 import type { CompanyDetail } from "../lib/types";
 
 // one brand colour plus neutrals; line style keeps the series apart
@@ -79,11 +79,11 @@ export function Compare() {
             </span>
           ))}
           {tickers.length < 4 && (
-            <div style={{ position: "relative" }}>
-              <input className="input input-search" placeholder="Thêm mã…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 220 }}
+            <div style={{ position: "relative", flex: "1 1 220px", maxWidth: 260 }}>
+              <input className="input input-search" placeholder="Thêm mã…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 220, maxWidth: "100%" }}
                 onKeyDown={(e) => { if (e.key === "Enter" && matches[0]) { setTickers([...tickers, matches[0].t]); setQ(""); } }} />
               {matches.length > 0 && (
-                <div className="card" style={{ position: "absolute", top: 40, left: 0, zIndex: 10, width: 340, padding: 6 }}>
+                <div className="card" style={{ position: "absolute", top: 44, left: 0, zIndex: 10, width: "min(340px, calc(100vw - 32px))", padding: 6, background: "var(--bg-elev)", border: "1px solid var(--border-strong)", borderRadius: 8 }}>
                   {matches.map((c) => (
                     <div key={c.t} className="palette-item" onClick={() => { setTickers([...tickers, c.t]); setQ(""); }}>
                       <span className="ticker" style={{ width: 44 }}>{c.t}</span>
@@ -108,7 +108,7 @@ export function Compare() {
           <Card title="Điểm rủi ro theo năm" className="mt"><Chart option={chart} height={300} /></Card>
           <Card pad={false} className="mt">
             <div className="table-wrap">
-              <table className="tbl">
+              <table className="tbl sticky1">
                 <thead>
                   <tr>
                     <th>Chỉ tiêu</th>
@@ -148,4 +148,15 @@ const compareRows: Array<[string, (d: CompanyDetail) => ReactNode]> = [
   ["Độ trễ công bố BCTN gần nhất", (d) => <span className="num">{lastYear(d)?.pub_delay != null ? `${Math.round(lastYear(d).pub_delay!)} ngày` : "—"}</span>],
   ["Số trang BCTN gần nhất", (d) => <span className="num">{fmtInt(lastYear(d)?.n_pages)}</span>],
   ["Ngôn ngữ tiêu cực (/10.000 từ)", (d) => <span className="num">{lastYear(d)?.txt_neg?.toFixed(1) ?? "—"}</span>],
+  ["Doanh thu BCTC gần nhất (tỷ)", (d) => <span className="num">{fmtBn(lastFin(d)?.net_revenue)}{finYear(d)}</span>],
+  ["LNST BCTC gần nhất (tỷ)", (d) => <span className="num" style={Number(lastFin(d)?.net_income) < 0 ? { color: "var(--red)" } : undefined}>{fmtBn(lastFin(d)?.net_income)}</span>],
+  ["ROA", (d) => <span className="num">{ratio(lastFin(d)?.net_income, lastFin(d)?.total_assets)}</span>],
+  ["Nợ / tổng tài sản", (d) => <span className="num">{ratio(lastFin(d)?.liabilities, lastFin(d)?.total_assets)}</span>],
 ];
+
+const lastFin = (d: CompanyDetail) => d.fin[d.fin.length - 1];
+const finYear = (d: CompanyDetail) => (lastFin(d) ? <span className="xs faint"> · {String(lastFin(d).fiscal_year)}</span> : null);
+function ratio(a: unknown, b: unknown) {
+  const x = Number(a), y = Number(b);
+  return a == null || b == null || !(y > 0) ? "—" : fmtPct(x / y);
+}

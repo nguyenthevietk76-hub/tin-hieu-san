@@ -58,7 +58,7 @@ export function Watchlist() {
       ) : (
         <Card pad={false}>
           <div className="table-wrap">
-            <table className="tbl">
+            <table className="tbl cards">
               <thead>
                 <tr>
                   <th style={{ width: 36 }} />
@@ -74,14 +74,14 @@ export function Watchlist() {
               <tbody>
                 {rows.map((c) => (
                   <tr key={c.t} className="click" onClick={() => nav(`/c/${c.t}`)}>
-                    <td><Star t={c.t} /></td>
-                    <td><div className="firm"><Avatar t={c.t} pct={c.pct1} size={30} /><div style={{ minWidth: 0 }}><div className="ticker">{c.t}</div><div className="co-name">{c.name}</div></div></div></td>
-                    <td><span className="badge outline">{c.ex}</span></td>
-                    <td style={{ minWidth: 140 }}><ScoreBar pct={c.pct1} /></td>
-                    <td style={{ minWidth: 140 }}><ScoreBar pct={c.pct2} /></td>
-                    <td>{c.listed ? <RiskBadge band={c.band1} /> : <span className="badge outline faint">Đã rời sàn</span>}</td>
-                    <td><StatusBadge status={c.status} short /></td>
-                    <td className="num small muted">{fmtDate(c.last_ev)}</td>
+                    <td className="hide-sm"><Star t={c.t} /></td>
+                    <td className="full"><div className="firm"><Avatar t={c.t} pct={c.pct1} size={30} /><div style={{ minWidth: 0, flex: 1 }}><div className="ticker">{c.t} <span className="badge outline only-sm" style={{ height: 18, fontSize: 10.5 }}>{c.ex}</span></div><div className="co-name">{c.name}</div></div><span className="only-sm"><Star t={c.t} /></span></div></td>
+                    <td className="hide-sm"><span className="badge outline">{c.ex}</span></td>
+                    <td className="wide" data-label="Rủi ro tuân thủ" style={{ minWidth: 140 }}><ScoreBar pct={c.pct1} /></td>
+                    <td className="wide" data-label="Rủi ro tài chính" style={{ minWidth: 140 }}><ScoreBar pct={c.pct2} /></td>
+                    <td data-label="Mức">{c.listed ? <RiskBadge band={c.band1} /> : <span className="badge outline faint">Đã rời sàn</span>}</td>
+                    <td data-label="Trạng thái" className={c.status ? "wide" : "hide-sm"}><StatusBadge status={c.status} short /></td>
+                    <td className="num small muted" data-label="Sự kiện gần nhất">{fmtDate(c.last_ev)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -93,7 +93,7 @@ export function Dashboard() {
       <div className="mk-hero">
         <h1>Rủi ro niêm yết, toàn cảnh</h1>
         <p className="muted">
-          {meta ? `${fmtInt(meta.counts.tickers)} doanh nghiệp · ${fmtInt(meta.counts.events)} sự kiện xử lý · cập nhật ${fmtDate(meta.as_of)}` : "…"}
+          {meta ? `${fmtInt(meta.counts.tickers)} doanh nghiệp · ${fmtInt(meta.counts.events)} sự kiện xử lý · dữ liệu tới ${fmtDate(meta.as_of)}` : "…"}
         </p>
         <Seg value={ex} options={[["all", "Tất cả sàn"], ["HOSE", "HOSE"], ["HNX", "HNX"]]} onChange={setEx} />
       </div>
@@ -141,9 +141,10 @@ export function Dashboard() {
           <section className="mk-section grid g-2" id="danh-sach">
             <div>
               <SectionHead id="ds-canh-bao" title="Đang bị cảnh báo / kiểm soát" to="/screener" />
+              <div className="table-wrap">
               <table className="tbl mk-tbl">
                 <thead>
-                  <tr><th>Mã</th><th>Trạng thái</th><th className="r">Rủi ro tuân thủ</th></tr>
+                  <tr><th>Mã</th><th>Trạng thái</th><th className="r" title="Điểm rủi ro tuân thủ">Tuân thủ</th></tr>
                 </thead>
                 <tbody>
                   {listed.filter((c) => c.status).sort((a, b) => (b.pct1 ?? 0) - (a.pct1 ?? 0)).slice(0, 6).map((c) => (
@@ -155,10 +156,12 @@ export function Dashboard() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <SeeAll to="/screener">Xem tất cả doanh nghiệp đang bị xử lý</SeeAll>
             </div>
             <div>
               <SectionHead id="ds-nhieu-nhat" title="Bị xử lý nhiều nhất" to="/events" />
+              <div className="table-wrap">
               <table className="tbl mk-tbl">
                 <thead>
                   <tr><th>Mã</th><th className="r">Số sự kiện</th><th className="r">Gần nhất</th></tr>
@@ -173,6 +176,7 @@ export function Dashboard() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <SeeAll to="/events">Xem toàn bộ sự kiện</SeeAll>
             </div>
           </section>
@@ -581,7 +585,7 @@ function Structure() {
       <div>
         <SectionHead id="co-cau-nam" title="Sự kiện theo năm và nhóm" />
         <div className="mk-chart">
-          <div className="xs faint" style={{ marginBottom: 6 }}>Năm {new Date().getFullYear()} tính tới {fmtDate(meta?.as_of)} · một sự kiện có thể thuộc nhiều nhóm</div>
+          <div className="xs faint" style={{ marginBottom: 6 }}>Năm {meta ? new Date(meta.as_of).getFullYear() : ""} tính tới {fmtDate(meta?.as_of)} · một sự kiện có thể thuộc nhiều nhóm</div>
           {eventsYear ? <Chart option={eventsYear} height={300} /> : <Loading h={300} />}
         </div>
       </div>

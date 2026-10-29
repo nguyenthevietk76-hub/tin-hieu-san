@@ -21,6 +21,7 @@ const P: Record<string, string> = {
   alert: "M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01",
   compare: "M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5",
   monitor: "M2 3h20v14H2zM8 21h8M12 17v4",
+  trend: "M3 17l6-6 4 4 8-8M14 7h7v7",
 };
 
 export function Icon({ name, size }: { name: keyof typeof P | string; size?: number }) {

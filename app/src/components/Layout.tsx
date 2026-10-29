@@ -11,6 +11,7 @@ const NAV: Array<Array<{ to: string; label: string; icon: string; end?: boolean 
   [
     { to: "/", label: "Tổng quan", icon: "dashboard", end: true },
     { to: "/screener", label: "Sàng lọc rủi ro", icon: "radar" },
+    { to: "/finance", label: "Sức khỏe tài chính", icon: "trend" },
     { to: "/events", label: "Sự kiện xử lý", icon: "bell" },
     { to: "/industries", label: "Phân tích ngành", icon: "layers" },
     { to: "/compare", label: "So sánh", icon: "compare" },

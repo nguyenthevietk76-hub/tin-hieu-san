@@ -32,6 +32,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 OUT = ROOT / "app" / "public" / "data"
 CACHE = HERE / "cache"
+FIN_PATH = HERE / "ext" / "fin_vci.csv"  # written by fetch_fin.py (external source, Vietcap)
 
 COMPLIANCE = ["E1", "E3", "E4", "E7"]
 PERFORMANCE = ["E2", "E5", "E6"]
@@ -157,6 +158,117 @@ def history_features(frame: pd.DataFrame, ev: pd.DataFrame, origin_col: str) -> 
     return h
 
 
+# --------------------------------------------------------------------------- financials
+FIN_COLS = ["current_assets", "total_assets", "liabilities", "current_liabilities", "st_borrowings", "lt_borrowings",
+            "equity", "paid_in_capital", "retained_earnings", "net_revenue", "gross_profit", "interest_expense",
+            "operating_profit", "profit_before_tax", "net_income", "cfo"]
+
+
+def load_fin() -> pd.DataFrame:
+    """Annual statements (fetch_fin.py) plus the ratios used by the model."""
+    if not FIN_PATH.exists():
+        log(f"financials: {FIN_PATH.name} missing – run pipeline/fetch_fin.py; financial features left empty")
+        return pd.DataFrame(columns=["ticker", "fiscal_year", "public_date"] + FIN_COLS)
+    f = pd.read_csv(FIN_PATH).sort_values(["ticker", "fiscal_year"]).reset_index(drop=True)
+    f["public_date"] = pd.to_datetime(f["public_date"], errors="coerce")
+    # a date before the fiscal year even ended is a source error: never treat it as published
+    f.loc[f["public_date"] <= pd.to_datetime(f["fiscal_year"].astype(str) + "-12-31"), "public_date"] = pd.NaT
+    ta = f["total_assets"].where(f["total_assets"] > 0)
+    f["roa"] = (f["net_income"] / ta).clip(-0.5, 0.5)
+    f["cfo_ta"] = (f["cfo"] / ta).clip(-0.5, 0.5)
+    return f
+
+
+def fin_features(frame: pd.DataFrame, fin: pd.DataFrame, origin_col: str, expected: pd.Series) -> pd.DataFrame:
+    """Latest statements published strictly before origin (no look-ahead).
+
+    `expected` is the fiscal year whose statements should be out by origin; anything
+    older than expected-1 counts as missing. Missing values are imputed later with no
+    missing flag: VCI lacks some later-delisted firms, so missingness would leak the future."""
+    by_t = {t: g for t, g in fin.groupby("ticker")}
+    rows = []
+    for t, o, exp in zip(frame["ticker"], frame[origin_col], expected):
+        rec = dict.fromkeys(FIN_FEAT, np.nan) | {"fin_fy": np.nan}
+        g = by_t.get(t)
+        if g is not None and not pd.isna(o):
+            ok = g[(g["public_date"] <= o) & g["fiscal_year"].between(exp - 1, exp)]
+            if len(ok):
+                r = ok.iloc[-1]
+                rec.update({k: r[k] for k in FIN_FEAT})
+                rec["fin_fy"] = r["fiscal_year"]
+        rows.append(rec)
+    return pd.DataFrame(rows, index=frame.index)
+
+
+def finance_summary(fin: pd.DataFrame, companies: list[dict], as_of: pd.Timestamp) -> dict:
+    """Latest published annual statements per firm, checked against the mandatory
+    delisting thresholds of Decree 155/2020 (negative equity, accumulated losses above
+    paid-in capital, three consecutive loss years) and the steps just before them."""
+    info = {c["t"]: c for c in companies}
+    f = fin[fin["public_date"] <= as_of].sort_values(["ticker", "fiscal_year"]).copy()
+    ta = f["total_assets"].where(f["total_assets"] > 0)
+    eq_pos = f["equity"].where(f["equity"] > 0)
+    # shown as-is: the model's clipped roa / cfo_ta would misreport extreme firms
+    f["roa"] = f["net_income"] / ta
+    f["cfo_ta"] = f["cfo"] / ta
+    f["roe"] = f["net_income"] / eq_pos
+    f["lev"] = f["liabilities"] / ta
+    f["cr"] = f["current_assets"] / f["current_liabilities"].where(f["current_liabilities"] > 0)
+    # accumulated loss as a share of paid-in capital (0 when retained earnings are positive)
+    f["accum"] = (-f["retained_earnings"]).clip(lower=0) / f["paid_in_capital"].where(f["paid_in_capital"] > 0)
+    f["is_loss"] = f["net_income"] < 0
+    streak, prev = [], (None, None)
+    for t, fy, lo in zip(f["ticker"], f["fiscal_year"], f["is_loss"]):
+        s = streak[-1] if prev == (t, fy - 1) else 0
+        streak.append(s + 1 if lo else 0)
+        prev = (t, fy)
+    f["streak"] = streak
+    f["rev_prev"] = f.groupby("ticker")["net_revenue"].shift()
+    f.loc[f.groupby("ticker")["fiscal_year"].diff() != 1, "rev_prev"] = np.nan
+    f["rev_g"] = (f["net_revenue"] / f["rev_prev"].where(f["rev_prev"] > 0) - 1).clip(-1, 5)
+
+    def check(r) -> tuple[str | None, list[str]]:
+        breach, near = [], []
+        if r["equity"] < 0:
+            breach.append("Vốn chủ sở hữu âm")
+        if r["accum"] > 1:
+            breach.append("Lỗ lũy kế vượt vốn góp")
+        elif r["accum"] >= 0.5:
+            near.append("Lỗ lũy kế ≥ 50% vốn góp")
+        if r["streak"] >= 3:
+            breach.append(f"Lỗ {int(r['streak'])} năm liên tiếp")
+        elif r["streak"] == 2:
+            near.append("Lỗ 2 năm liên tiếp")
+        return ("breach" if breach else "near" if near else None), breach + near
+
+    by_year = []
+    for fy, g in f.groupby("fiscal_year"):
+        flags = [check(r)[0] for _, r in g.iterrows()]
+        by_year.append({
+            "fy": int(fy), "n": int(len(g)), "loss": int(g["is_loss"].sum()),
+            "neg_eq": int((g["equity"] < 0).sum()), "accum_cap": int((g["accum"] > 1).sum()),
+            "streak3": int((g["streak"] >= 3).sum()),
+            "breach": flags.count("breach"), "near": flags.count("near"),
+        })
+
+    rows = []
+    for t, g in f.groupby("ticker"):
+        if t not in info:
+            continue
+        r, c = g.iloc[-1], info[t]
+        flag, why = check(r)
+        rows.append({k: clean(v) for k, v in {
+            "t": t, "name": c["name"], "ex": c["ex"], "ind1": c["ind1"], "ind3": c["ind3"],
+            "listed": c["listed"], "status": c["status"], "pct2": c.get("pct2"),
+            "fy": r["fiscal_year"], "pub": r["public_date"],
+            "rev": r["net_revenue"], "ni": r["net_income"], "ta": r["total_assets"], "eq": r["equity"],
+            "cap": r["paid_in_capital"], "re": r["retained_earnings"], "cfo": r["cfo"],
+            "rev_g": r["rev_g"], "roa": r["roa"], "roe": r["roe"], "lev": r["lev"], "cr": r["cr"],
+            "cfo_ta": r["cfo_ta"], "accum": r["accum"], "streak": r["streak"],
+        }.items()} | {"flag": flag, "why": why, "ni_hist": [[int(y), clean(v)] for y, v in zip(g["fiscal_year"], g["net_income"])]})
+    return {"as_of": as_of.strftime("%Y-%m-%d"), "rows": rows, "by_year": by_year}
+
+
 # --------------------------------------------------------------------------- model
 FEATURES = {
     "ev_comp_3y": "Số sự kiện tuân thủ (E1/E3/E4/E7) trong 3 năm trước",
@@ -173,8 +285,14 @@ FEATURES = {
     "txt_unc": "Mật độ từ ngữ bất định (/10.000 từ)",
     "txt_pos": "Mật độ từ ngữ tích cực (/10.000 từ)",
     "no_text": "Không trích được văn bản thuyết minh",
+    # From the latest annual statements published before origin. Other ratios
+    # (negative equity, accumulated losses, loss streak, leverage, liquidity, late
+    # statements) were tried and lowered walk-forward AUC, so they are left out.
+    "roa": "Lợi nhuận sau thuế / tổng tài sản (BCTC năm gần nhất)",
+    "cfo_ta": "Lưu chuyển tiền thuần từ HĐKD / tổng tài sản (BCTC năm gần nhất)",
 }
 FEAT = list(FEATURES)
+FIN_FEAT = ["roa", "cfo_ta"]
 
 
 def design_matrix(df: pd.DataFrame, fill: dict | None = None) -> tuple[pd.DataFrame, dict]:
@@ -192,6 +310,8 @@ def design_matrix(df: pd.DataFrame, fill: dict | None = None) -> tuple[pd.DataFr
     X["no_text"] = df["n_words"].fillna(0).lt(500).astype(int)
     for k in ["txt_neg", "txt_unc", "txt_pos"]:
         X[k] = df[k].where(X["no_text"] == 0).clip(upper=df[k].quantile(0.99))
+    for k in FIN_FEAT:
+        X[k] = df[k]
     if fill is None:
         fill = {c: float(X[c].median()) for c in X.columns}
     X = X.fillna(fill)
@@ -211,7 +331,9 @@ class Model:
         self.feats = feats
         X = X[feats]
         self.mu = X.mean()
-        self.sd = X.std().replace(0, 1)
+        # a column that is constant in training (e.g. financials before the source starts)
+        # can have a float-noise std like 1e-17: treat it as zero, not as a huge scale factor
+        self.sd = X.std().mask(lambda s: s < 1e-9, 1)
         self.lr = LogisticRegression(C=0.5, max_iter=2000, random_state=SEED)
         self.lr.fit((X - self.mu) / self.sd, y)
 
@@ -294,7 +416,11 @@ def main() -> None:
     a = ap.parse_args()
     src = Path(a.src)
     t0 = time.time()
-    now = pd.Timestamp(datetime.now().date())
+    # Latest listing snapshot (file names end in _YYYYMMDD); the live score is
+    # evaluated at the data cut-off, not at the day the pipeline happens to run.
+    snaps = sorted((src / "data/raw/listing").glob("vietstock_danh_sach_niem_yet_*.csv"))
+    snap = snaps[-1].stem.rsplit("_", 1)[1]
+    listing_date = pd.Timestamp(snap)
 
     # ---- frame
     sf = pd.read_csv(src / "data/processed/sample_frame_v2.csv")
@@ -326,7 +452,13 @@ def main() -> None:
 
     ev = load_events(src)
     df = df.join(history_features(df, ev, "origin"))
-    log(f"events: {len(ev)} usable records")
+    events_last = ev["date"].max().normalize()
+    as_of = max(listing_date, events_last)
+    log(f"events: {len(ev)} usable records; data as of {as_of:%Y-%m-%d}")
+
+    fin = load_fin()
+    df = df.join(fin_features(df, fin, "origin", df["fiscal_year"]))
+    log(f"financials: {len(fin)} statements, matched to {int(df['fin_fy'].notna().sum())} firm-years")
 
     X, fill = design_matrix(df)
 
@@ -360,13 +492,13 @@ def main() -> None:
     for target in ["Y1", "Y2"]:
         df[f"pct_{target}"] = df.groupby("fiscal_year")[f"p_{target}"].rank(pct=True) * 100
 
-    # ---- live now-cast for currently listed HOSE/HNX firms (origin = today)
-    listing = pd.read_csv(src / "data/raw/listing/vietstock_danh_sach_niem_yet_20261001.csv", dtype=str)
+    # ---- live now-cast for currently listed HOSE/HNX firms (origin = data cut-off)
+    listing = pd.read_csv(src / f"data/raw/listing/vietstock_danh_sach_niem_yet_{snap}.csv", dtype=str)
     listing = listing.rename(columns={"Mã CK": "ticker", "Tên công ty": "name_now", "Sàn": "exchange_now",
                                       "Ngày GDĐT": "first_trade"})
-    special = pd.read_csv(src / "data/raw/listing/vietstock_theo_doi_dac_biet_20261001.csv", dtype=str)
+    special = pd.read_csv(src / f"data/raw/listing/vietstock_theo_doi_dac_biet_{snap}.csv", dtype=str)
     special = special.rename(columns={"Mã CK": "ticker", "Trạng thái": "status_now"})[["ticker", "status_now"]]
-    delist = pd.read_csv(src / "data/raw/listing/vietstock_huy_niem_yet_20261001.csv", dtype=str)
+    delist = pd.read_csv(src / f"data/raw/listing/vietstock_huy_niem_yet_{snap}.csv", dtype=str)
     delist = delist.rename(columns={"Mã CK": "ticker", "Ngày GDCC": "last_trade", "Sàn GD trước khi hủy": "delist_from",
                                     "file_title": "delist_title", "file_url": "delist_url"})
     delist = delist.drop_duplicates("ticker")[["ticker", "last_trade", "delist_from", "delist_title", "delist_url"]]
@@ -375,12 +507,17 @@ def main() -> None:
     live = latest.merge(listing[["ticker", "exchange_now", "name_now", "first_trade"]], on="ticker", how="left")
     live = live.merge(special, on="ticker", how="left")
     live = live[live["exchange_now"].isin(["HOSE", "HNX"])].copy()
-    live["origin_live"] = now
+    live["origin_live"] = as_of
     hl = history_features(live, ev, "origin_live")
     for c in hl:
         live[c] = hl[c].values
     live["prior_status"] = live["status_now"].notna().astype(int)
     live["exchange"] = live["exchange_now"]
+    # annual statements of year Y are due by the end of April of Y+1 at the latest
+    due_fy = as_of.year - 1 if (as_of.month, as_of.day) > (4, 30) else as_of.year - 2
+    fl = fin_features(live, fin, "origin_live", pd.Series(due_fy, index=live.index))
+    for c in fl:
+        live[c] = fl[c].values
     XL, _ = design_matrix(live, fill)
     for target in ["Y1", "Y2"]:
         live[f"live_p_{target}"] = res[target]["final"].proba(XL)
@@ -389,12 +526,8 @@ def main() -> None:
     live = live.set_index("ticker")
     log(f"live now-cast: {len(live)} listed HOSE/HNX firms")
 
-    # ---- financials (verified subset only)
-    fin_path = src / "data/interim/bctc_gop/bctc_gop_rong.csv"
-    fin = pd.read_csv(fin_path) if fin_path.exists() else pd.DataFrame(columns=["ticker"])
-    fin_cols = ["total_assets", "liabilities", "equity", "net_revenue", "gross_profit", "profit_before_tax",
-                "net_income", "cfo", "cash_end", "current_assets", "current_liabilities", "retained_earnings"]
-    fin = fin[["ticker", "fiscal_year", "loai_bctc"] + [c for c in fin_cols if c in fin]]
+    # ---- financials shown on company pages (external source, see fetch_fin.py)
+    fin_show = fin[["ticker", "fiscal_year", "public_date"] + FIN_COLS]
 
     # ---- per-company files
     ev_pub = ev.copy()
@@ -412,7 +545,7 @@ def main() -> None:
     year_cols = ["fiscal_year", "exchange", "origin", "pub_date", "pub_delay", "has_pdf", "pdf_type", "n_pages",
                  "ocr_share", "pdf_source", "n_words", "n_sections", "txt_neg", "txt_unc", "txt_pos", "top_neg",
                  "ev_comp_3y", "ev_perf_3y", "ev_any_1y", "prior_status", "Y1", "Y2", "Y_all",
-                 "n_E1", "n_E2", "n_E3", "n_E4", "n_E5", "n_E6", "n_E7", "p_Y1", "p_Y2", "pct_Y1", "pct_Y2"]
+                 "n_E1", "n_E2", "n_E3", "n_E4", "n_E5", "n_E6", "n_E7", "p_Y1", "p_Y2", "pct_Y1", "pct_Y2", "fin_fy"]
     for t, g in df.sort_values("fiscal_year").groupby("ticker"):
         g = g.copy()
         yrs = records(g[year_cols])
@@ -452,11 +585,11 @@ def main() -> None:
             "info": companies[-1],
             "years": yrs,
             "events": records(e_t) if e_t is not None else [],
-            "fin": records(fin[fin.ticker == t].drop(columns="ticker").sort_values("fiscal_year")),
+            "fin": records(fin_show[fin_show.ticker == t].drop(columns="ticker")),
         }
         if lv is not None:
             detail["live"] = {
-                "as_of": now.strftime("%Y-%m-%d"),
+                "as_of": as_of.strftime("%Y-%m-%d"),
                 "x": {f: round(float(v), 3) for f, v in zip(FEAT, XL.loc[XL.index[list(live.index).index(t)]].values)},
                 "drivers_Y1": {f: round(float(v), 3) for f, v in zip(FEAT, lv["live_c_Y1"]) if not np.isnan(v)},
                 "drivers_Y2": {f: round(float(v), 3) for f, v in zip(FEAT, lv["live_c_Y2"]) if not np.isnan(v)},
@@ -509,14 +642,28 @@ def main() -> None:
     }
     dump(stats, "stats.json")
 
+    dump(finance_summary(fin, companies, as_of), "finance.json")
+    log("finance.json written")
+
     meta = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "as_of": now.strftime("%Y-%m-%d"),
+        "as_of": as_of.strftime("%Y-%m-%d"),
+        # freshness of each input, so the app can say exactly how recent the data is
+        "sources": {
+            "listing": listing_date.strftime("%Y-%m-%d"),
+            "events_last": events_last.strftime("%Y-%m-%d"),
+            "bctn_fy_last": int(df.loc[df["has_pdf"].astype(bool), "fiscal_year"].max()),
+            "bctn_pub_last": clean(df["pub_date"].max()),
+            "fin_fy_last": int(fin["fiscal_year"].max()) if len(fin) else None,
+            "fin_fy_first": int(fin["fiscal_year"].min()) if len(fin) else None,
+            "fin_name": "Vietcap (VCI)",
+        },
         "counts": {
             "firm_years": int(len(df)), "tickers": int(df.ticker.nunique()), "events": int(len(ev_out)),
             "events_labelled": int(len(labelled)), "reports": int(df.has_pdf.sum()),
             "listed_now": int(len(live)), "years": [int(df.fiscal_year.min()), int(df.fiscal_year.max())],
-            "fin_rows": int(len(fin)),
+            "fin_rows": int(len(fin)), "fin_tickers": int(fin["ticker"].nunique()),
+            "fin_firm_years": int(df["fin_fy"].notna().sum()),
         },
         "e_def": E_DEF,
         "features": FEATURES,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Avatar, Card, ErrorBox, Loading, Pager, RiskBadge, ScoreBar, Seg, SortTh, Star, StatusBadge, sortBy } from "../components/ui";
+import { Avatar, Card, ErrorBox, Loading, Pager, RiskBadge, ScoreBar, Seg, SortSelect, SortTh, Star, StatusBadge, sortBy } from "../components/ui";
 import { Icon } from "../components/Icon";
 import { useCompanies } from "../lib/data";
 import { downloadCsv, fmtDate, fold } from "../lib/format";
@@ -112,13 +112,18 @@ export function Screener() {
           </button>
           <span className="spacer" />
           <Seg value={scope} options={[["listed", "Đang niêm yết"], ["all", "Gồm DN đã rời sàn"]]} onChange={(v) => { setScope(v); reset(); }} />
+          <SortSelect
+            options={[["pct1", "Rủi ro tuân thủ"], ["pct2", "Rủi ro tài chính"], ["n_lab", "Số sự kiện"], ["last_ev", "Sự kiện gần nhất"], ["t", "Mã"]]}
+            sort={sort}
+            setSort={(s) => { setSort(s); reset(); }}
+          />
         </div>
         {!data ? (
           <div className="card-body"><Loading h={480} /></div>
         ) : (
           <>
             <div className="table-wrap">
-              <table className="tbl">
+              <table className="tbl cards compact">
                 <thead>
                   <tr>
                     <th style={{ width: 36 }} />
@@ -136,24 +141,25 @@ export function Screener() {
                 <tbody>
                   {view.map((c) => (
                     <tr key={c.t} className="click" onClick={() => nav(`/c/${c.t}`)}>
-                      <td><Star t={c.t} /></td>
-                      <td>
+                      <td className="hide-sm"><Star t={c.t} /></td>
+                      <td className="full">
                         <div className="firm">
                           <Avatar t={c.t} pct={c.pct1} size={30} />
-                          <div style={{ minWidth: 0 }}>
-                            <div className="ticker">{c.t}</div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div className="ticker">{c.t} <span className="badge outline only-sm" style={{ height: 18, fontSize: 10.5 }}>{c.ex}</span></div>
                             <div className="co-name" style={{ maxWidth: 240 }}>{c.name}</div>
                           </div>
+                          <span className="only-sm"><Star t={c.t} /></span>
                         </div>
                       </td>
-                      <td><span className="badge outline">{c.ex}</span></td>
-                      <td className="small muted" title={`${c.ind1} › ${c.ind3}`}><div className="co-name" style={{ maxWidth: 180, minWidth: 120 }}>{c.ind3 || c.ind1}</div></td>
-                      <td style={{ minWidth: 130 }}><ScoreBar pct={c.pct1} /></td>
-                      <td style={{ minWidth: 130 }}><ScoreBar pct={c.pct2} /></td>
-                      <td>{c.listed ? <RiskBadge band={c.band1} /> : <span className="badge outline faint">Đã rời sàn</span>}</td>
-                      <td><StatusBadge status={c.status} short /></td>
-                      <td className="r num">{c.n_lab || <span className="faint">0</span>}</td>
-                      <td className="num small muted">{fmtDate(c.last_ev)}</td>
+                      <td className="hide-sm"><span className="badge outline">{c.ex}</span></td>
+                      <td className="small muted hide-sm" title={`${c.ind1} › ${c.ind3}`}><div className="co-name" style={{ maxWidth: 180, minWidth: 120 }}>{c.ind3 || c.ind1}</div></td>
+                      <td className="wide" data-label="Rủi ro tuân thủ" style={{ minWidth: 130 }}><ScoreBar pct={c.pct1} /></td>
+                      <td className="wide" data-label="Rủi ro tài chính" style={{ minWidth: 130 }}><ScoreBar pct={c.pct2} /></td>
+                      <td data-label="Mức">{c.listed ? <RiskBadge band={c.band1} /> : <span className="badge outline faint">Đã rời sàn</span>}</td>
+                      <td data-label="Trạng thái" className={c.status ? "wide" : "hide-sm"}><StatusBadge status={c.status} short /></td>
+                      <td className="r num" data-label="Sự kiện">{c.n_lab || <span className="faint">0</span>}</td>
+                      <td className="num small muted" data-label="Gần nhất">{fmtDate(c.last_ev)}</td>
                     </tr>
                   ))}
                   {view.length === 0 && (

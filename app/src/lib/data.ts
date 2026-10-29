@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Company, CompanyDetail, EventRec, Meta, Stats } from "./types";
+import type { Company, CompanyDetail, EventRec, FinSummary, Meta, Stats } from "./types";
 
 const BASE = `${import.meta.env.BASE_URL}data/`;
 const cache = new Map<string, Promise<unknown>>();
@@ -42,5 +42,6 @@ export const useCompanies = () => useData<Company[]>("companies.json");
 export const useEvents = () => useData<EventRec[]>("events.json");
 export const useMeta = () => useData<Meta>("meta.json");
 export const useStats = () => useData<Stats>("stats.json");
+export const useFinance = () => useData<FinSummary>("finance.json");
 export const useCompany = (t: string | undefined) =>
   useData<CompanyDetail>(t ? `company/${encodeURIComponent(t.toUpperCase())}.json` : null);

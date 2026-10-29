@@ -9,6 +9,9 @@ export function fmtFeature(k: string, v: number | undefined): string {
     case "no_text":
     case "hnx":
       return v >= 0.5 ? "Có" : "Không";
+    case "roa":
+    case "cfo_ta":
+      return `${(v * 100).toFixed(1)}%`;
     case "pub_delay":
       return `${Math.round(v)} ngày`;
     case "ocr_share":
@@ -39,4 +42,6 @@ export const FEATURE_SHORT: Record<string, string> = {
   txt_unc: "Ngôn ngữ bất định trong BCTN",
   txt_pos: "Ngôn ngữ tích cực trong BCTN",
   no_text: "Không trích được văn bản",
+  roa: "ROA (BCTC gần nhất)",
+  cfo_ta: "Dòng tiền HĐKD / tài sản",
 };

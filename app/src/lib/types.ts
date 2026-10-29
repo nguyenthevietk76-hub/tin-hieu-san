@@ -103,6 +103,15 @@ export interface Metrics {
 export interface Meta {
   generated_at: string;
   as_of: string;
+  sources?: {
+    listing: string;
+    events_last: string;
+    bctn_fy_last: number;
+    bctn_pub_last: string | null;
+    fin_fy_last: number | null;
+    fin_fy_first?: number | null;
+    fin_name?: string;
+  };
   counts: {
     firm_years: number;
     tickers: number;
@@ -112,11 +121,53 @@ export interface Meta {
     listed_now: number;
     years: [number, number];
     fin_rows: number;
+    fin_tickers?: number;
+    fin_firm_years?: number;
   };
   e_def: Record<string, string>;
   features: Record<string, string>;
   model: Record<"Y1" | "Y2", { oos: Metrics; per_year: Record<string, Metrics>; coef: Record<string, number>; intercept: number }>;
   lexicon: Record<string, string[]>;
+}
+
+export type FinFlag = "breach" | "near" | null;
+
+/** Latest published annual statements of one firm (finance.json). Money in VND. */
+export interface FinRow {
+  t: string;
+  name: string;
+  ex: string;
+  ind1: string;
+  ind3: string;
+  listed: boolean;
+  status: string | null;
+  pct2: number | null;
+  fy: number;
+  pub: string | null;
+  rev: number | null;
+  ni: number | null;
+  ta: number | null;
+  eq: number | null;
+  cap: number | null;
+  re: number | null;
+  cfo: number | null;
+  rev_g: number | null;
+  roa: number | null;
+  roe: number | null;
+  lev: number | null;
+  cr: number | null;
+  cfo_ta: number | null;
+  accum: number | null;
+  streak: number;
+  flag: FinFlag;
+  why: string[];
+  ni_hist: Array<[number, number | null]>;
+}
+
+export interface FinSummary {
+  as_of: string;
+  rows: FinRow[];
+  by_year: Array<{ fy: number; n: number; loss: number; neg_eq: number; accum_cap: number; streak3: number; breach: number; near: number }>;
 }
 
 export interface Stats {

@@ -35,7 +35,7 @@ export function CompanyPage() {
   const { info } = data;
   return (
     <>
-      <Link to="/screener" className="small row" style={{ marginBottom: 14, gap: 6, color: "var(--text-2)" }}>
+      <Link to="/screener" className="small row back-link" style={{ marginBottom: 14, gap: 6, color: "var(--text-2)" }}>
         <Icon name="arrowLeft" size={14} /> Bộ sàng lọc
       </Link>
       <section className="card co-hero">
@@ -177,7 +177,7 @@ function Overview({ d }: { d: CompanyDetail }) {
         </Card>
         <Card title="Tóm tắt theo năm" pad={false}>
           <div className="table-wrap">
-            <table className="tbl">
+            <table className="tbl sticky1">
               <thead>
                 <tr>
                   <th>Năm TC</th>
@@ -275,7 +275,7 @@ function Reports({ d }: { d: CompanyDetail }) {
       </Card>
       <Card title="Hồ sơ báo cáo thường niên" pad={false}>
         <div className="table-wrap">
-          <table className="tbl">
+          <table className="tbl sticky1">
             <thead>
               <tr>
                 <th>Năm TC</th>
@@ -324,10 +324,13 @@ const FIN_ROWS: Array<[string, string]> = [
   ["current_assets", "Tài sản ngắn hạn"],
   ["liabilities", "Nợ phải trả"],
   ["current_liabilities", "Nợ ngắn hạn"],
+  ["st_borrowings", "Vay ngắn hạn"],
+  ["lt_borrowings", "Vay dài hạn"],
   ["equity", "Vốn chủ sở hữu"],
+  ["paid_in_capital", "Vốn góp"],
   ["retained_earnings", "LNST chưa phân phối"],
+  ["interest_expense", "Chi phí lãi vay"],
   ["cfo", "Lưu chuyển tiền thuần từ HĐKD"],
-  ["cash_end", "Tiền cuối kỳ"],
 ];
 
 function Financials({ d }: { d: CompanyDetail }) {
@@ -336,20 +339,29 @@ function Financials({ d }: { d: CompanyDetail }) {
       <Card>
         <div className="empty">
           <Icon name="info" size={22} />
-          <p>Chưa có số liệu BCTC đã kiểm chứng cho doanh nghiệp này.</p>
-          <p className="small">Hệ thống chỉ hiển thị số liệu đã qua kiểm tra đẳng thức kế toán; phạm vi đang được mở rộng.</p>
+          <p>Nguồn dữ liệu chưa có BCTC năm của doanh nghiệp này.</p>
+          <p className="small">Nguồn bên ngoài chỉ có BCTC từ năm 2018 và thiếu số liệu của một số doanh nghiệp đã hủy niêm yết.</p>
         </div>
       </Card>
     );
+  const fin = [...d.fin].reverse(); // newest year first, visible without scrolling on phones
   return (
-    <Card title="Chỉ tiêu tài chính chính" sub="Đơn vị: tỷ đồng · nguồn BCTC kiểm toán / BCTC trong BCTN" pad={false}>
+    <Card
+      title="Chỉ tiêu tài chính chính"
+      sub="Đơn vị: tỷ đồng · nguồn Vietcap (VCI), bên thứ ba, chưa đối chiếu với BCTC gốc · dòng dưới năm là ngày công bố"
+      action={<Link className="btn" to="/finance"><Icon name="trend" />So với toàn thị trường</Link>}
+      pad={false}
+    >
       <div className="table-wrap">
-        <table className="tbl">
+        <table className="tbl sticky1">
           <thead>
             <tr>
               <th>Chỉ tiêu</th>
-              {d.fin.map((f, i) => (
-                <th key={i} className="r">{String(f.fiscal_year)} <span className="faint">{f.loai_bctc === "hop_nhat" ? "HN" : f.loai_bctc === "rieng" ? "R" : ""}</span></th>
+              {fin.map((f, i) => (
+                <th key={i} className="r">
+                  {String(f.fiscal_year)}
+                  <div className="xs faint" style={{ fontWeight: 400 }}>{fmtDate(f.public_date as string | null)}</div>
+                </th>
               ))}
             </tr>
           </thead>
@@ -357,9 +369,11 @@ function Financials({ d }: { d: CompanyDetail }) {
             {FIN_ROWS.map(([k, l]) => (
               <tr key={k}>
                 <td>{l}</td>
-                {d.fin.map((f, i) => (
-                  <td key={i} className="r num" style={{ color: Number(f[k]) < 0 ? "var(--red)" : undefined }}>{fmtBn(f[k] as number)}</td>
-                ))}
+                {fin.map((f, i) => {
+                  // the source books interest expense as a negative number; show it as a cost
+                  const v = k === "interest_expense" && f[k] != null ? Math.abs(Number(f[k])) : (f[k] as number);
+                  return <td key={i} className="r num" style={{ color: Number(v) < 0 ? "var(--red)" : undefined }}>{fmtBn(v)}</td>;
+                })}
               </tr>
             ))}
           </tbody>

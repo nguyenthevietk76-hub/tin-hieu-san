@@ -69,7 +69,7 @@ export function Methodology() {
         <div>
           <div className="eyebrow">Tài liệu</div>
           <h1>Phương pháp & dữ liệu</h1>
-          <p>Cách hệ thống thu thập sự kiện, xây dựng điểm rủi ro và kiểm định độ chính xác. Cập nhật {fmtDate(meta.generated_at)}.</p>
+          <p>Cách hệ thống thu thập sự kiện, xây dựng điểm rủi ro và kiểm định độ chính xác. Dữ liệu tới {fmtDate(meta.as_of)} · xây dựng lúc {fmtDate(meta.generated_at)}.</p>
         </div>
         <Seg value={target} options={[["Y1", "Mô hình tuân thủ"], ["Y2", "Mô hình tài chính"]]} onChange={setTarget} />
       </div>
@@ -117,6 +117,36 @@ export function Methodology() {
             {meta.counts.years[0]}–{meta.counts.years[1]} ({fmtInt(meta.counts.firm_years)} doanh nghiệp-năm). Loại trừ ngân hàng,
             bảo hiểm, công ty chứng khoán, quỹ và UPCoM. Sàn được xác định theo từng năm, không theo danh sách hiện tại.
           </p>
+          {meta.sources && (
+            <>
+              <h2>Độ mới của dữ liệu</h2>
+              <p>
+                Dữ liệu không cập nhật tự động; mỗi nguồn có mốc riêng. Danh sách niêm yết và diện cảnh báo/kiểm soát: chụp ngày{" "}
+                <strong>{fmtDate(meta.sources.listing)}</strong>. Sự kiện xử lý: mới nhất ngày{" "}
+                <strong>{fmtDate(meta.sources.events_last)}</strong>. Báo cáo thường niên: tới năm tài chính{" "}
+                <strong>{meta.sources.bctn_fy_last}</strong> (công bố gần nhất {fmtDate(meta.sources.bctn_pub_last)}).
+                {meta.sources.fin_name && meta.sources.fin_fy_last && (
+                  <>
+                    {" "}BCTC năm: năm tài chính <strong>{meta.sources.fin_fy_first}–{meta.sources.fin_fy_last}</strong>.
+                  </>
+                )}{" "}
+                Điểm hiện tại được tính tại mốc {fmtDate(meta.as_of)}.
+              </p>
+            </>
+          )}
+          {meta.sources?.fin_name && (
+            <>
+              <h2>Số liệu báo cáo tài chính</h2>
+              <p>
+                BCTC năm ({fmtInt(meta.counts.fin_rows)} báo cáo của {fmtInt(meta.counts.fin_tickers ?? 0)} doanh nghiệp) lấy từ nguồn
+                công khai bên ngoài <strong>{meta.sources.fin_name}</strong>, kèm ngày công bố của từng báo cáo. Đây là dữ liệu bên thứ
+                ba, chưa đối chiếu với BCTC gốc. Nguồn chỉ có số liệu từ năm tài chính {meta.sources.fin_fy_first} và thiếu một số
+                doanh nghiệp đã hủy niêm yết, nên {fmtInt(meta.counts.fin_firm_years ?? 0)}/{fmtInt(meta.counts.firm_years)}{" "}
+                doanh nghiệp-năm có số liệu; phần còn thiếu được điền bằng trung vị. Mô hình không dùng cờ "thiếu số liệu" vì việc thiếu
+                gắn với việc bị hủy niêm yết về sau, tức là thông tin của tương lai.
+              </p>
+            </>
+          )}
           <h2>Sự kiện</h2>
           <p>
             {fmtInt(meta.counts.events)} sự kiện được tổng hợp từ thông báo, quyết định của Sở Giao dịch Chứng khoán và UBCKNN. Mỗi
@@ -127,14 +157,16 @@ export function Methodology() {
           <p>
             Điểm của năm tài chính <em>t</em> được tính tại <strong>ngày công bố báo cáo thường niên năm t</strong> (nếu không xác
             định được: 30/06 năm t+1). Mọi đặc trưng chỉ dùng thông tin công bố trước thời điểm này; sự kiện được đếm trong 12 tháng
-            kế tiếp. Điểm hiện tại của doanh nghiệp đang niêm yết dùng thời điểm đánh giá là hôm nay, lịch sử sự kiện tới hôm nay,
+            kế tiếp. Điểm hiện tại của doanh nghiệp đang niêm yết dùng thời điểm đánh giá là mốc dữ liệu, lịch sử sự kiện tới mốc đó,
             trạng thái cảnh báo/kiểm soát hiện hành và báo cáo thường niên gần nhất.
           </p>
           <h2>Mô hình</h2>
           <p>
             Hồi quy logistic có điều chuẩn trên {Object.keys(meta.features).length} yếu tố: lịch sử xử lý, trạng thái hiện hành, độ
-            trễ và định dạng công bố BCTN, cùng tín hiệu ngôn ngữ trích từ phần thuyết minh của BCTN (đã loại BCTC, báo cáo kiểm
-            toán và câu nhắc tới tình trạng cảnh báo). Kiểm định theo kiểu <em>walk-forward</em>: năm T chỉ được chấm bởi mô hình
+            trễ và định dạng công bố BCTN, tín hiệu ngôn ngữ trích từ phần thuyết minh của BCTN (đã loại BCTC, báo cáo kiểm toán
+            và câu nhắc tới tình trạng cảnh báo), cùng hai chỉ tiêu từ BCTC năm gần nhất đã công bố trước thời điểm đánh giá: ROA
+            và dòng tiền thuần từ HĐKD trên tổng tài sản. Các chỉ tiêu khác (vốn chủ âm, lỗ lũy kế, số năm lỗ liên tiếp, đòn bẩy,
+            thanh toán hiện hành, chậm công bố BCTC) đã được thử nhưng làm giảm độ chính xác ngoài mẫu nên không dùng. Kiểm định theo kiểu <em>walk-forward</em>: năm T chỉ được chấm bởi mô hình
             học từ các năm ≤ T−2. Điểm 0–100 là phân vị xác suất trong cùng kỳ; mức <strong>Rất cao</strong> ≥ 90, <strong>Cao</strong>{" "}
             75–90, <strong>Trung bình</strong> 50–75.
           </p>
