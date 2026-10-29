@@ -167,6 +167,8 @@ export async function POST(request: Request): Promise<Response> {
     else console.error("chat", e);
     // a short cause code (no message text) so a failing deployment can be diagnosed from the browser
     const code = e instanceof Anthropic.APIError ? `claude_${e.status ?? "conn"}` : e instanceof Anthropic.AnthropicError ? "claude_config" : "server";
-    return json({ error: "failed", code, message: "Không trả lời được lúc này. Lượt hỏi này không bị tính." }, 502);
+    // a 400 names the rejected request field; it carries no key or user data
+    const detail = e instanceof Anthropic.BadRequestError ? e.message.slice(0, 300) : undefined;
+    return json({ error: "failed", code, detail, message: "Không trả lời được lúc này. Lượt hỏi này không bị tính." }, 502);
   }
 }
