@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Icon } from "./Icon";
 import { CommandPalette } from "./CommandPalette";
+import { ChatWidget } from "./Chat";
 import { useMeta } from "../lib/data";
 import { useTheme, useWatchlist } from "../lib/store";
 import { fmtDate } from "../lib/format";
@@ -135,6 +136,7 @@ export function Layout() {
         <Outlet />
       </main>
       <CommandPalette open={palette} onClose={() => setPalette(false)} />
+      <ChatWidget />
     </div>
   );
 }

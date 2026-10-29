@@ -45,12 +45,32 @@ Sau đó chạy lại `npm run build`. Hoặc nhấp đúp `update_data.bat`.
 | Hồ sơ doanh nghiệp | Điểm tuân thủ / tài chính, yếu tố tác động, lịch sử điểm, dòng thời gian sự kiện kèm văn bản gốc, hồ sơ BCTN, tín hiệu ngôn ngữ, BCTC năm 2018–2025 (nguồn VCI) |
 | Sức khỏe tài chính | BCTC năm gần nhất của mọi DN: doanh thu, LNST các năm, ROA, ROE, nợ/TS, thanh toán hiện hành, CFO/TS; cảnh báo chạm/tiệm cận ngưỡng hủy niêm yết bắt buộc (NĐ 155/2020: vốn chủ âm, lỗ lũy kế vượt vốn góp, lỗ 3 năm liên tiếp); xuất CSV |
 | Sự kiện xử lý | 1.694 sự kiện, lọc theo nhóm/biện pháp/cơ quan/năm, liên kết văn bản gốc, xuất CSV |
-| Phân tích ngành | Tỷ lệ vi phạm theo ngành, bản đồ nhiệt ngành × năm |
+| Phân tích ngành | Dự báo 12 tháng tới theo ngành kèm kiểm định ngược, tỷ lệ vi phạm theo ngành, bản đồ nhiệt ngành × năm |
+| Hỏi AI | Chatbot trả lời từ dữ liệu của web, có nguồn; nút "Hỏi AI về doanh nghiệp này" trên hồ sơ |
 | So sánh | Đặt tối đa 4 doanh nghiệp cạnh nhau |
 | Theo dõi | Danh sách cá nhân (lưu trên trình duyệt) |
 | Phương pháp | Độ chính xác mô hình, trọng số, phạm vi dữ liệu, giới hạn sử dụng |
 
 Phím tắt: `Ctrl K` hoặc `/` để tìm nhanh mã/doanh nghiệp. Giao diện sáng/tối, dùng tốt trên điện thoại.
+
+## Trợ lý AI (chatbot) và dự báo
+
+- **Dự báo 12 tháng tới** (`forecast.json`, trang Phân tích ngành): số DN đang niêm yết dự kiến bị xử lý = tổng xác
+  suất của mô hình, hiệu chỉnh theo kiểm định ngược 2019–2024; khoảng 90% có tính dao động chung giữa các năm.
+- **Hỏi AI**: `app/api/chat.ts` (Vercel Function) gọi Claude Sonnet 5.5 (effort `medium`) với 5 công cụ chỉ đọc dữ liệu
+  của web (`app/api/_lib/tools.ts`); nguồn được ghi dưới mỗi câu trả lời. Mỗi người (theo IP, đã băm) 6 câu/ngày, cả web
+  tối đa 100 câu/ngày (`CHAT_GLOBAL_DAILY_LIMIT`).
+
+Biến môi trường trên Vercel (Settings → Environment Variables):
+
+| Biến | Bắt buộc | Ghi chú |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | có | Khóa API từ console.anthropic.com |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | có | Tự có khi gắn Upstash for Redis (Vercel Marketplace) vào project; thiếu thì chatbot tự tắt |
+| `CHAT_SALT` | nên có | Chuỗi ngẫu nhiên để băm IP |
+| `CHAT_DAILY_LIMIT`, `CHAT_GLOBAL_DAILY_LIMIT` | không | Mặc định 6 và 100 |
+
+Kiểm tra kiểu cho phần máy chủ: `npx tsc -p tsconfig.api.json` (trong `app/`).
 
 ## Điểm rủi ro
 

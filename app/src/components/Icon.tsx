@@ -22,6 +22,9 @@ const P: Record<string, string> = {
   compare: "M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5",
   monitor: "M2 3h20v14H2zM8 21h8M12 17v4",
   trend: "M3 17l6-6 4 4 8-8M14 7h7v7",
+  chat: "M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12zM8.5 12h.01M12 12h.01M15.5 12h.01",
+  send: "M22 2 11 13M22 2l-7 20-4-9-9-4z",
+  refresh: "M3 12a9 9 0 0 1 15.3-6.4L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.3 6.4L3 16M3 21v-5h5",
 };
 
 export function Icon({ name, size }: { name: keyof typeof P | string; size?: number }) {

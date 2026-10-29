@@ -170,6 +170,45 @@ export interface FinSummary {
   by_year: Array<{ fy: number; n: number; loss: number; neg_eq: number; accum_cap: number; streak3: number; breach: number; near: number }>;
 }
 
+/** Count forecast for the next 12 months (forecast.json); exp is the expected number of firms. */
+export interface FcRange {
+  exp: number;
+  lo: number;
+  hi: number;
+  rate: number | null;
+}
+
+export interface FcBacktest {
+  fy: number;
+  n: number;
+  pred_y1: number;
+  act_y1: number;
+  pred_y2: number;
+  act_y2: number;
+}
+
+export interface Forecast {
+  as_of: string;
+  horizon_end: string;
+  calib: Record<"Y1" | "Y2", number>;
+  shock: Record<"Y1" | "Y2", number>;
+  market: { n: number; Y1: FcRange; Y2: FcRange };
+  backtest: FcBacktest[];
+  accuracy: Record<"Y1" | "Y2", { mae: number; corr: number }>;
+  industries: Array<{
+    ind: string;
+    n: number;
+    Y1: FcRange;
+    Y2: FcRange;
+    base_y1: number | null;
+    base_y2: number | null;
+    hist: Array<{ fy: number; n: number; y1: number; y2: number }>;
+    top_y1: Array<{ t: string; p: number }>;
+    top_y2: Array<{ t: string; p: number }>;
+    backtest: FcBacktest[];
+  }>;
+}
+
 export interface Stats {
   events_by_year: Array<Record<string, number>>;
   events_by_measure: Record<string, number>;

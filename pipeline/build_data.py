@@ -200,6 +200,72 @@ def fin_features(frame: pd.DataFrame, fin: pd.DataFrame, origin_col: str, expect
     return pd.DataFrame(rows, index=frame.index)
 
 
+def industry_forecast(df: pd.DataFrame, live: pd.DataFrame, as_of: pd.Timestamp) -> dict:
+    """Expected number of listed firms with a new event in the next 12 months, by industry.
+
+    The count is the sum of the firms' model probabilities (a Poisson-binomial mean), with
+    a 90% interval from its variance. Walk-forward years 2019–2024 give the backtest: the
+    same sum computed from out-of-sample probabilities against the events that happened.
+    Its overall actual/predicted ratio (k) recalibrates the live forecast."""
+    bt = df[df["fiscal_year"].between(2019, 2024)]
+    calib = {t: float(bt[t].sum() / bt[f"p_{t}"].sum()) for t in ["Y1", "Y2"]}
+    # Firms are not independent: whole years run hot or cold (2021: twice the expected late
+    # filings). The spread of actual/expected across backtest years widens the interval.
+    yr = bt.groupby("fiscal_year")[["Y1", "Y2", "p_Y1", "p_Y2"]].sum()
+    shock = {t: float((yr[t] / (yr[f"p_{t}"] * calib[t])).std()) for t in ["Y1", "Y2"]}
+
+    def summary(p: pd.Series, k: float, s: float) -> dict:
+        p = (p * k).clip(0, 1)
+        m = float(p.sum())
+        sd = float(np.sqrt((p * (1 - p)).sum() + (s * m) ** 2))
+        return {"exp": round(m, 1), "lo": max(0, int(np.floor(m - 1.645 * sd))), "hi": int(np.ceil(m + 1.645 * sd)),
+                "rate": round(m / len(p), 4) if len(p) else None}
+
+    def backtest(g: pd.DataFrame) -> list[dict]:
+        return [{"fy": int(fy), "n": int(len(x)),
+                 "pred_y1": round(float(x["p_Y1"].sum()), 1), "act_y1": int(x["Y1"].sum()),
+                 "pred_y2": round(float(x["p_Y2"].sum()), 1), "act_y2": int(x["Y2"].sum())}
+                for fy, x in g.groupby("fiscal_year")]
+
+    hist = df.groupby(["industry_l1", "fiscal_year"]).agg(n=("ticker", "size"), y1=("Y1", "mean"), y2=("Y2", "mean"))
+    inds = []
+    for ind, g in live.groupby("industry_l1"):
+        top = g.assign(t=g.index).sort_values("live_p_Y1", ascending=False)
+        h = hist.loc[ind] if ind in hist.index.get_level_values(0) else None
+        recent = df[(df["industry_l1"] == ind) & df["fiscal_year"].between(2022, 2024)]
+        inds.append({
+            "ind": ind, "n": int(len(g)),
+            "Y1": summary(g["live_p_Y1"], calib["Y1"], shock["Y1"]), "Y2": summary(g["live_p_Y2"], calib["Y2"], shock["Y2"]),
+            # actual event rate over the last three labelled years, to read the forecast as a trend
+            "base_y1": round(float(recent["Y1"].mean()), 4) if len(recent) else None,
+            "base_y2": round(float(recent["Y2"].mean()), 4) if len(recent) else None,
+            "hist": [{"fy": int(fy), "n": int(r["n"]), "y1": round(float(r["y1"]), 4), "y2": round(float(r["y2"]), 4)}
+                     for fy, r in h.iterrows()] if h is not None else [],
+            "top_y1": [{"t": t, "p": round(float(p) * calib["Y1"], 3)} for t, p in zip(top["t"][:5], top["live_p_Y1"][:5])],
+            "top_y2": [{"t": t, "p": round(float(p) * calib["Y2"], 3)}
+                       for t, p in g["live_p_Y2"].sort_values(ascending=False)[:5].items()],
+            "backtest": backtest(bt[bt["industry_l1"] == ind]),
+        })
+    inds.sort(key=lambda r: -r["Y1"]["exp"] - r["Y2"]["exp"])
+
+    # backtest accuracy at industry level: error of the industry-year counts
+    by_iy = bt.groupby(["industry_l1", "fiscal_year"]).agg(p1=("p_Y1", "sum"), a1=("Y1", "sum"), p2=("p_Y2", "sum"), a2=("Y2", "sum"))
+    acc = {t: {"mae": round(float((by_iy[f"p{i}"] * calib[t] - by_iy[f"a{i}"]).abs().mean()), 2),
+               "corr": round(float(np.corrcoef(by_iy[f"p{i}"], by_iy[f"a{i}"])[0, 1]), 3)}
+           for i, t in [(1, "Y1"), (2, "Y2")]}
+    return {
+        "as_of": as_of.strftime("%Y-%m-%d"),
+        "horizon_end": (as_of + pd.DateOffset(months=12)).strftime("%Y-%m-%d"),
+        "calib": {t: round(k, 3) for t, k in calib.items()},
+        "shock": {t: round(v, 3) for t, v in shock.items()},
+        "market": {"n": int(len(live)), "Y1": summary(live["live_p_Y1"], calib["Y1"], shock["Y1"]),
+                   "Y2": summary(live["live_p_Y2"], calib["Y2"], shock["Y2"])},
+        "backtest": backtest(bt),
+        "accuracy": acc,
+        "industries": inds,
+    }
+
+
 def finance_summary(fin: pd.DataFrame, companies: list[dict], as_of: pd.Timestamp) -> dict:
     """Latest published annual statements per firm, checked against the mandatory
     delisting thresholds of Decree 155/2020 (negative equity, accumulated losses above
@@ -643,6 +709,10 @@ def main() -> None:
     dump(stats, "stats.json")
 
     dump(finance_summary(fin, companies, as_of), "finance.json")
+
+    fc = industry_forecast(df, live, as_of)
+    dump(fc, "forecast.json")
+    log(f"forecast: Y1 {fc['market']['Y1']['exp']} (k={fc['calib']['Y1']}), Y2 {fc['market']['Y2']['exp']} (k={fc['calib']['Y2']})")
     log("finance.json written")
 
     meta = {

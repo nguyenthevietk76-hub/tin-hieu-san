@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Chart } from "../components/Chart";
 import { Drivers } from "../components/Drivers";
 import { Icon } from "../components/Icon";
+import { openChat } from "../components/Chat";
 import { Avatar, Card, Delta, ECode, ECodes, Loading, RiskBadge, Seg, Star, StatusBadge } from "../components/ui";
 import { useCompany, useMeta } from "../lib/data";
 import { fmtBn, fmtDate, fmtInt, fmtPct } from "../lib/format";
@@ -61,6 +62,14 @@ export function CompanyPage() {
             Dữ liệu {info.y0}–{info.y1} · {info.reports} báo cáo thường niên · {info.n_lab} sự kiện E1–E7
             {data.delist?.last_trade && <> · GD cuối {data.delist.last_trade}</>}
           </div>
+          <button
+            className="btn btn-primary"
+            style={{ marginTop: 14 }}
+            onClick={() => openChat(`Vì sao ${info.t} có điểm rủi ro như hiện tại, và khả năng bị xử lý trong 12 tháng tới thế nào?`, info.t)}
+          >
+            <Icon name="chat" />
+            Hỏi AI về doanh nghiệp này
+          </button>
         </div>
         <ScoreTiles d={data} />
       </section>

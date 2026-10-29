@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Chart } from "../components/Chart";
+import { ForecastSection } from "../components/ForecastSection";
 import { Card, ErrorBox, Loading, Seg, SortTh, sortBy } from "../components/ui";
 import { useCompanies, useStats } from "../lib/data";
 import { fmtInt, fmtPct } from "../lib/format";
@@ -72,11 +73,15 @@ export function Industries() {
         <div>
           <div className="eyebrow">Ngành</div>
           <h1>Phân tích rủi ro theo ngành</h1>
-          <p>Tỷ lệ doanh nghiệp-năm phát sinh sự kiện xử lý trong 12 tháng sau ngày công bố báo cáo thường niên, theo ngành cấp 1.</p>
+          <p>Dự báo số doanh nghiệp bị xử lý trong 12 tháng tới và tỷ lệ doanh nghiệp-năm phát sinh sự kiện xử lý trong quá khứ, theo ngành cấp 1.</p>
         </div>
+      </div>
+      <ForecastSection />
+      <div className="row wrap mt" style={{ justifyContent: "space-between", marginTop: 40 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700 }}>Lịch sử theo ngành</h2>
         <Seg value={metric} options={[["yall", "Mọi sự kiện"], ["y1", "Tuân thủ"], ["y2", "Tài chính"]]} onChange={setMetric} />
       </div>
-      <div className="grid g-2">
+      <div className="grid g-2" style={{ marginTop: 14 }}>
         <Card title="Tỷ lệ phát sinh sự kiện" sub="Bình quân 2015–2024">{stats ? <Chart option={bar} height={360} /> : <Loading h={360} />}</Card>
         <Card title="Bản đồ nhiệt theo năm" sub="% DN-năm có ít nhất một sự kiện E1–E7">{heat ? <Chart option={heat} height={360} /> : <Loading h={360} />}</Card>
       </div>

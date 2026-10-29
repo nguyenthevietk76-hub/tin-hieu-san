@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { Chart } from "../components/Chart";
 import { Card, ECode, ErrorBox, Kpi, Loading, Seg } from "../components/ui";
@@ -169,6 +170,20 @@ export function Methodology() {
             thanh toán hiện hành, chậm công bố BCTC) đã được thử nhưng làm giảm độ chính xác ngoài mẫu nên không dùng. Kiểm định theo kiểu <em>walk-forward</em>: năm T chỉ được chấm bởi mô hình
             học từ các năm ≤ T−2. Điểm 0–100 là phân vị xác suất trong cùng kỳ; mức <strong>Rất cao</strong> ≥ 90, <strong>Cao</strong>{" "}
             75–90, <strong>Trung bình</strong> 50–75.
+          </p>
+          <h2>Dự báo theo ngành</h2>
+          <p>
+            Số doanh nghiệp dự kiến bị xử lý trong 12 tháng tới là tổng xác suất của từng doanh nghiệp đang niêm yết, hiệu chỉnh theo
+            tỷ lệ thực tế/dự báo của kiểm định ngược 2019–2024. Các doanh nghiệp không độc lập với nhau (có năm cả thị trường bị xử
+            lý nhiều hơn hẳn), nên khoảng 90% được nới thêm theo mức dao động giữa các năm quan sát được. Xem{" "}
+            <Link to="/industries">Phân tích ngành</Link>.
+          </p>
+          <h2>Trợ lý AI</h2>
+          <p>
+            Nút <strong>Hỏi AI</strong> dùng mô hình Claude Sonnet 5.5 của Anthropic. Trợ lý chỉ đọc dữ liệu của web qua các công cụ
+            tra cứu (hồ sơ doanh nghiệp, bộ lọc, sự kiện, ngành, dự báo) và ghi nguồn dưới mỗi câu trả lời; nó không tự đưa ra dự báo
+            ngoài các con số của mô hình. Mỗi người được hỏi 6 câu mỗi ngày. Câu hỏi được gửi tới Anthropic để xử lý; không nhập thông
+            tin cá nhân vào khung chat.
           </p>
           <h2>Văn bản báo cáo</h2>
           <p>
