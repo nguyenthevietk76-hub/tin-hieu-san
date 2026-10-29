@@ -165,6 +165,8 @@ export async function POST(request: Request): Promise<Response> {
       return json({ error: "busy", message: "Hệ thống đang bận, bạn thử lại sau ít phút. Lượt hỏi này không bị tính." }, 503);
     if (e instanceof Anthropic.APIError) console.error("claude", e.status, e.message);
     else console.error("chat", e);
-    return json({ error: "failed", message: "Không trả lời được lúc này. Lượt hỏi này không bị tính." }, 502);
+    // a short cause code (no message text) so a failing deployment can be diagnosed from the browser
+    const code = e instanceof Anthropic.APIError ? `claude_${e.status ?? "conn"}` : e instanceof Anthropic.AnthropicError ? "claude_config" : "server";
+    return json({ error: "failed", code, message: "Không trả lời được lúc này. Lượt hỏi này không bị tính." }, 502);
   }
 }
