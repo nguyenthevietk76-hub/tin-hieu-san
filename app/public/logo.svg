@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 218 40" width="436" height="80" role="img" aria-label="Tín Hiệu Sàn">
+  <!-- Tín Hiệu Sàn mark: lighthouse with a signal beam; wordmark set in Inter ExtraBold -->
+  <g transform="translate(0 3)" fill="#e7eaf0">
+    <path d="M9 30.5 L11.2 12 H16.8 L19 30.5 Z"/>
+    <path d="M10 10.5 L14 5 L18 10.5 Z"/>
+    <path d="M20.5 11.2 L35 5.5 A13 13 0 0 1 35 21.5 L20.5 15.8 Z" fill="#4c8dff"/>
+    <rect x="6" y="29" width="16" height="2.5" rx="1"/>
+  </g>
+  <text x="42" y="29" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="25" font-weight="800" letter-spacing="-0.6" fill="#e7eaf0">Tín Hiệu Sàn</text>
+</svg>
