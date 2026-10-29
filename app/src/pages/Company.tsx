@@ -68,7 +68,7 @@ export function CompanyPage() {
             onClick={() => openChat(`Vì sao ${info.t} có điểm rủi ro như hiện tại, và khả năng bị xử lý trong 12 tháng tới thế nào?`, info.t)}
           >
             <Icon name="chat" />
-            Hỏi AI về doanh nghiệp này
+            Hỏi nhanh về doanh nghiệp này
           </button>
         </div>
         <ScoreTiles d={data} />

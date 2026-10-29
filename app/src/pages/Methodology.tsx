@@ -178,12 +178,11 @@ export function Methodology() {
             lý nhiều hơn hẳn), nên khoảng 90% được nới thêm theo mức dao động giữa các năm quan sát được. Xem{" "}
             <Link to="/industries">Phân tích ngành</Link>.
           </p>
-          <h2>Trợ lý AI</h2>
+          <h2>Trợ lý hỏi nhanh</h2>
           <p>
-            Nút <strong>Hỏi AI</strong> dùng mô hình Claude Sonnet 5.5 của Anthropic. Trợ lý chỉ đọc dữ liệu của web qua các công cụ
-            tra cứu (hồ sơ doanh nghiệp, bộ lọc, sự kiện, ngành, dự báo) và ghi nguồn dưới mỗi câu trả lời; nó không tự đưa ra dự báo
-            ngoài các con số của mô hình. Mỗi người được hỏi 6 câu mỗi ngày. Câu hỏi được gửi tới Anthropic để xử lý; không nhập thông
-            tin cá nhân vào khung chat.
+            Nút <strong>Hỏi nhanh</strong> là trợ lý tra cứu tự động, không dùng AI: nó nhận ra các dạng câu hỏi phổ biến (một mã,
+            xếp hạng rủi ro, sự kiện, sức khỏe tài chính, ngành, dự báo) và trả lời bằng câu mẫu điền số liệu của web, kèm nguồn. Mọi
+            xử lý diễn ra trên trình duyệt; câu hỏi không được gửi đi đâu.
           </p>
           <h2>Văn bản báo cáo</h2>
           <p>

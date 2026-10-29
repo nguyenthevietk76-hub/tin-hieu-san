@@ -57,7 +57,7 @@ export function ForecastSection() {
         </div>
         <button className="btn" onClick={() => openChat("Dự báo 12 tháng tới ngành nào có nhiều doanh nghiệp bị xử lý nhất, và dự báo này đáng tin đến đâu?")}>
           <Icon name="chat" />
-          Hỏi AI về dự báo
+          Hỏi nhanh về dự báo
         </button>
       </div>
 

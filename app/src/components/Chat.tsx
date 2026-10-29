@@ -1,23 +1,18 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "./Icon";
+import { ask, EXAMPLES, type Source } from "../lib/assistant";
 import { useMeta } from "../lib/data";
 import { fmtDate } from "../lib/format";
 
-// Chat with Claude over the site's data (/api/chat). The conversation lives in
-// sessionStorage, so it survives page changes and reloads within the tab.
-type Source = { label: string; href: string };
+// Question box over the site's data, answered in the browser by the rule-based
+// assistant (lib/assistant.ts). The conversation lives in sessionStorage, so it
+// survives page changes and reloads within the tab.
 type Msg = { role: "user" | "assistant"; content: string; sources?: Source[]; error?: boolean };
 type State = { msgs: Msg[]; ticker: string | null };
 
 const KEY = "tinhieusan.chat";
-const MAX_CHARS = 600;
+const MAX_CHARS = 300;
 const OPEN_EVENT = "tinhieusan:chat";
-const SUGGESTIONS = [
-  "Dự báo 12 tháng tới có bao nhiêu doanh nghiệp bị xử lý?",
-  "Những mã nào có rủi ro tài chính cao nhất hiện nay?",
-  "Ngành bất động sản đang có xu hướng thế nào?",
-  "Doanh nghiệp nào đang tiệm cận ngưỡng hủy niêm yết?",
-];
 
 /** Open the chat panel from anywhere, optionally with a drafted question about one ticker. */
 export function openChat(question?: string, ticker?: string) {
@@ -82,7 +77,6 @@ export function ChatWidget() {
   const [state, setState] = useState<State>(load);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const [quota, setQuota] = useState<{ remaining: number | null; limit: number; off?: boolean } | null>(null);
   const { data: meta } = useMeta();
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -110,12 +104,6 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (!open) return;
-    fetch("api/chat", { headers: { Accept: "application/json" } })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}));
-        setQuota({ remaining: j.remaining ?? null, limit: j.limit ?? 6, off: j.error === "not_configured" });
-      })
-      .catch(() => setQuota(null));
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
     // the panel covers the page on phones: keep the page behind it from scrolling
@@ -134,47 +122,35 @@ export function ChatWidget() {
   const send = async (text: string) => {
     const q = text.trim();
     if (!q || busy || q.length > MAX_CHARS) return;
-    const history = [...state.msgs.filter((m) => !m.error), { role: "user" as const, content: q }];
     const shown = { ...state, msgs: [...state.msgs, { role: "user" as const, content: q }] };
     update(shown);
     setDraft("");
     setBusy(true);
     try {
-      const r = await fetch("api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content })), ticker: state.ticker }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (typeof j.remaining === "number") setQuota((x) => ({ limit: x?.limit ?? 6, remaining: j.remaining }));
-      const msg: Msg = r.ok
-        ? { role: "assistant", content: j.answer, sources: j.sources ?? [] }
-        : { role: "assistant", content: j.message ?? "Không kết nối được máy chủ trả lời. Bạn thử lại sau.", error: true };
-      update({ ...shown, msgs: [...shown.msgs, msg] });
+      const r = await ask(q, state.ticker);
+      update({ ...shown, msgs: [...shown.msgs, { role: "assistant", content: r.text, sources: r.sources }] });
     } catch {
-      update({ ...shown, msgs: [...shown.msgs, { role: "assistant", content: "Không kết nối được máy chủ trả lời. Bạn thử lại sau.", error: true }] });
+      update({ ...shown, msgs: [...shown.msgs, { role: "assistant", content: "Không tải được dữ liệu để trả lời. Bạn thử lại sau.", error: true }] });
     } finally {
       setBusy(false);
     }
   };
 
-  const out = quota?.remaining === 0;
-  const left = quota?.remaining != null ? `Còn ${quota.remaining}/${quota.limit} câu hỏi hôm nay` : "Mỗi người 6 câu hỏi mỗi ngày";
 
   return (
     <>
       {!open && (
-        <button className="chat-fab" onClick={() => setOpen(true)} aria-label="Hỏi trợ lý AI">
+        <button className="chat-fab" onClick={() => setOpen(true)} aria-label="Mở trợ lý tra cứu">
           <Icon name="chat" />
-          <span>Hỏi AI</span>
+          <span>Hỏi nhanh</span>
         </button>
       )}
       {open && (
-        <section className="chat-panel" role="dialog" aria-label="Trợ lý AI Tín Hiệu Sàn">
+        <section className="chat-panel" role="dialog" aria-label="Trợ lý tra cứu Tín Hiệu Sàn">
           <header className="chat-head">
             <div style={{ minWidth: 0 }}>
               <div className="chat-title">Hỏi Tín Hiệu Sàn</div>
-              <div className="xs faint">Claude · {quota?.off ? "đang tạm tắt" : left}</div>
+              <div className="xs faint">Trợ lý tra cứu tự động · miễn phí</div>
             </div>
             <span className="spacer" />
             {state.msgs.length > 0 && (
@@ -191,11 +167,11 @@ export function ChatWidget() {
             {state.msgs.length === 0 && (
               <div className="chat-empty">
                 <p className="muted small">
-                  Hỏi về điểm rủi ro, sự kiện xử lý, sức khỏe tài chính hay dự báo 12 tháng tới. Câu trả lời lấy từ dữ liệu của web và
-                  ghi nguồn bên dưới.
+                  Hỏi về một mã (viết hoa, ví dụ HAG), xếp hạng rủi ro, sự kiện xử lý, sức khỏe tài chính hay dự báo 12 tháng tới.
+                  Câu trả lời lấy từ dữ liệu của web và ghi nguồn bên dưới.
                 </p>
-                {SUGGESTIONS.map((s) => (
-                  <button key={s} className="chat-suggest" onClick={() => send(s)} disabled={busy || out || quota?.off}>
+                {EXAMPLES.map((s) => (
+                  <button key={s} className="chat-suggest" onClick={() => send(s)} disabled={busy}>
                     {s}
                   </button>
                 ))}
@@ -220,7 +196,7 @@ export function ChatWidget() {
             ))}
             {busy && (
               <div className="chat-msg assistant">
-                <p className="faint small chat-typing">Đang tra cứu dữ liệu…</p>
+                <p className="faint small chat-typing">Đang tra cứu…</p>
               </div>
             )}
           </div>
@@ -246,8 +222,7 @@ export function ChatWidget() {
                 value={draft}
                 rows={1}
                 maxLength={MAX_CHARS}
-                placeholder={quota?.off ? "Chatbot đang tạm tắt" : out ? "Bạn đã hết lượt hỏi hôm nay" : "Nhập câu hỏi…"}
-                disabled={out || quota?.off}
+                placeholder="Nhập câu hỏi…"
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -256,13 +231,13 @@ export function ChatWidget() {
                   }
                 }}
               />
-              <button className="chat-send" type="submit" disabled={busy || !draft.trim() || out || quota?.off} aria-label="Gửi">
+              <button className="chat-send" type="submit" disabled={busy || !draft.trim()} aria-label="Gửi">
                 <Icon name="send" />
               </button>
             </div>
             <div className="xs faint chat-note">
-              Trả lời bởi AI từ dữ liệu của web{meta ? ` (tới ${fmtDate(meta.as_of)})` : ""}, có thể sai sót. Không phải khuyến nghị
-              đầu tư.
+              Trả lời tự động theo mẫu từ dữ liệu của web{meta ? ` (tới ${fmtDate(meta.as_of)})` : ""}, không dùng AI. Không phải
+              khuyến nghị đầu tư.
             </div>
           </form>
         </section>
