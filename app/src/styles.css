@@ -630,3 +630,12 @@ a.tk:hover { text-decoration: none; color: var(--brand-text); }
   .tbl.cards .fc-1 { order: 1; } .tbl.cards .fc-2 { order: 2; } .tbl.cards .fc-3 { order: 3; }
   .tbl.cards .fc-4 { order: 4; } .tbl.cards .fc-5 { order: 5; }
 }
+
+/* keep the last row of every page (pagers, notes) clear of the floating "Hỏi nhanh" button */
+.content { padding-bottom: 104px; }
+@media (max-width: 640px) {
+  .chat-fab { width: 52px; height: 52px; padding: 0; justify-content: center; }
+  .chat-fab span { display: none; }
+  .chat-fab svg { width: 22px; height: 22px; }
+  .content { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+}
