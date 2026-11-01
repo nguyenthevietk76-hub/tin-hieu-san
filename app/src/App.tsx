@@ -6,7 +6,6 @@ import { CompanyPage } from "./pages/Company";
 import { Events } from "./pages/Events";
 import { Industries } from "./pages/Industries";
 import { Watchlist } from "./pages/Watchlist";
-import { Methodology } from "./pages/Methodology";
 import { Compare } from "./pages/Compare";
 import { Finance } from "./pages/Finance";
 
@@ -34,7 +33,6 @@ export function App() {
           <Route path="industries" element={<Industries />} />
           <Route path="compare" element={<Compare />} />
           <Route path="watchlist" element={<Watchlist />} />
-          <Route path="methodology" element={<Methodology />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

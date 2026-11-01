@@ -61,8 +61,8 @@ export function RiskBadge({ band, pct }: { band?: Band | null; pct?: number | nu
 
 export function ECode({ code }: { code: string }) {
   return (
-    <span className="ecode" style={{ ["--ec" as string]: E_COLOR[code] ?? "var(--n2)" }} title={E_SHORT[code]}>
-      {code}
+    <span className="ecode" style={{ ["--ec" as string]: E_COLOR[code] ?? "var(--n2)" }}>
+      {E_SHORT[code] ?? code}
     </span>
   );
 }

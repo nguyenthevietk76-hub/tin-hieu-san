@@ -49,7 +49,6 @@ Sau đó chạy lại `npm run build`. Hoặc nhấp đúp `update_data.bat`.
 | Hỏi nhanh | Trợ lý tra cứu tự động trả lời từ dữ liệu của web, có nguồn; nút "Hỏi nhanh về doanh nghiệp này" trên hồ sơ |
 | So sánh | Đặt tối đa 4 doanh nghiệp cạnh nhau |
 | Theo dõi | Danh sách cá nhân (lưu trên trình duyệt) |
-| Phương pháp | Độ chính xác mô hình, trọng số, phạm vi dữ liệu, giới hạn sử dụng |
 
 Phím tắt: `Ctrl K` hoặc `/` để tìm nhanh mã/doanh nghiệp. Giao diện sáng/tối, dùng tốt trên điện thoại.
 

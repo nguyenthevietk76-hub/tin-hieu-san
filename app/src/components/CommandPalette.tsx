@@ -12,7 +12,6 @@ const PAGES = [
   { to: "/industries", label: "Phân tích ngành", icon: "layers" },
   { to: "/compare", label: "So sánh doanh nghiệp", icon: "compare" },
   { to: "/watchlist", label: "Danh sách theo dõi", icon: "star" },
-  { to: "/methodology", label: "Phương pháp & dữ liệu", icon: "book" },
 ];
 
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {

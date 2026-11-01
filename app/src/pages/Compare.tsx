@@ -141,7 +141,7 @@ const compareRows: Array<[string, (d: CompanyDetail) => ReactNode]> = [
   ["Rủi ro tuân thủ", (d) => <span className="row"><span className="num">{d.info.pct1 != null ? Math.round(d.info.pct1) : "—"}</span><RiskBadge pct={d.info.pct1 ?? lastYear(d)?.pct_Y1} /></span>],
   ["Rủi ro tài chính", (d) => <span className="row"><span className="num">{d.info.pct2 != null ? Math.round(d.info.pct2) : "—"}</span><RiskBadge pct={d.info.pct2 ?? lastYear(d)?.pct_Y2} /></span>],
   ["Trạng thái", (d) => (d.info.status ? <StatusBadge status={d.info.status} /> : <span className="faint">Bình thường</span>)],
-  ["Số sự kiện E1–E7", (d) => <span className="num">{d.info.n_lab}</span>],
+  ["Số sự kiện vi phạm", (d) => <span className="num">{d.info.n_lab}</span>],
   ["Sự kiện gần nhất", (d) => <span className="num small">{fmtDate(d.info.last_ev)}</span>],
   ["Năm có vi phạm tuân thủ", (d) => <span className="num">{d.info.y1_years} / {d.years.length}</span>],
   ["Năm có sự kiện tài chính", (d) => <span className="num">{d.info.y2_years} / {d.years.length}</span>],

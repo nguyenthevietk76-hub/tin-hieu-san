@@ -83,7 +83,7 @@ export function Industries() {
       </div>
       <div className="grid g-2" style={{ marginTop: 14 }}>
         <Card title="Tỷ lệ phát sinh sự kiện" sub="Bình quân 2015–2024">{stats ? <Chart option={bar} height={360} /> : <Loading h={360} />}</Card>
-        <Card title="Bản đồ nhiệt theo năm" sub="% DN-năm có ít nhất một sự kiện E1–E7">{heat ? <Chart option={heat} height={360} /> : <Loading h={360} />}</Card>
+        <Card title="Bản đồ nhiệt theo năm" sub="% DN-năm có ít nhất một sự kiện vi phạm">{heat ? <Chart option={heat} height={360} /> : <Loading h={360} />}</Card>
       </div>
       <Card title="Bảng tổng hợp ngành" sub="Nhấn vào một ngành để mở bộ sàng lọc" pad={false} className="mt">
         <div className="table-wrap">

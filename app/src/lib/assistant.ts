@@ -95,7 +95,7 @@ export async function ask(question: string, contextTicker: string | null): Promi
   if (has(f, /ngan hang|bao hiem|chung khoan|cong ty quan ly quy/) && !ticker)
     return {
       text: "Dữ liệu chỉ gồm **doanh nghiệp phi tài chính** niêm yết trên HOSE và HNX; ngân hàng, bảo hiểm, công ty chứng khoán, quỹ và UPCoM nằm ngoài phạm vi.",
-      sources: [{ label: "Phương pháp", href: "#/methodology" }],
+      sources: [],
     };
 
   const wantsForecast = has(f, /du bao|du doan|12 thang|sap toi|tuong lai|nam toi|nam sau|se bi|kha nang|xac suat/);
@@ -146,12 +146,12 @@ async function company(t: string, d: Data): Promise<Reply> {
     const e = ev[0];
     lines.push(
       "",
-      `Có **${ev.length} sự kiện** xử lý nhóm E1–E7; gần nhất ngày ${fmtDate(e.d)}: ${MEASURE[e.m] ?? e.m} (${e.e
+      `Có **${ev.length} sự kiện** xử lý vi phạm; gần nhất ngày ${fmtDate(e.d)}: ${MEASURE[e.m] ?? e.m} (${e.e
         .split(";")
-        .map((k) => `${k} ${E_SHORT[k]}`)
+        .map((k) => E_SHORT[k] ?? k)
         .join(", ")}).`,
     );
-  } else lines.push("", "Chưa có sự kiện xử lý nhóm E1–E7 trong dữ liệu.");
+  } else lines.push("", "Chưa có sự kiện xử lý vi phạm trong dữ liệu.");
   const fr = d.finT.get(t);
   if (fr) {
     lines.push(
@@ -170,7 +170,6 @@ function forecast(ind: string | null, d: Data): Reply {
   const period = `từ ${fmtDate(fc.as_of)} đến ${fmtDate(fc.horizon_end)}`;
   const sources = [
     { label: "Dự báo theo ngành", href: "#/industries" },
-    { label: "Phương pháp", href: "#/methodology" },
   ];
   if (ind) {
     const r = fc.industries.find((x) => x.ind === ind);
@@ -291,7 +290,7 @@ async function events(f: string, ind: string | null, d: Data): Promise<Reply> {
   const byYear: Record<string, number> = {};
   for (const e of ev) byYear[e.d.slice(0, 4)] = (byYear[e.d.slice(0, 4)] ?? 0) + 1;
   if (year) ev = ev.filter((e) => e.d.startsWith(year));
-  const sc = [group ? `nhóm ${group} ${E_SHORT[group]}` : "", ind ? `ngành ${ind}` : "", year ? `năm ${year}` : ""].filter(Boolean).join(", ");
+  const sc = [group ? `nhóm ${E_SHORT[group]}` : "", ind ? `ngành ${ind}` : "", year ? `năm ${year}` : ""].filter(Boolean).join(", ");
   const years = Object.keys(byYear).sort().slice(-5);
   const list = ev.slice(0, 6);
   return {
@@ -343,7 +342,7 @@ function method(d: Data): Reply {
       `- Tài chính: AUC **${fmtNum(m.Y2.oos.auc, 2)}**; gấp ${fmtNum(m.Y2.oos.top10_lift, 1)} lần.`,
       "AUC 0,5 là đoán ngẫu nhiên, 1,0 là hoàn hảo. Điểm phù hợp để sàng lọc và ưu tiên rà soát, không phải kết luận chắc chắn.",
     ].join("\n"),
-    sources: [{ label: "Phương pháp", href: "#/methodology" }],
+    sources: [],
   };
 }
 

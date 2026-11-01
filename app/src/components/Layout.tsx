@@ -18,7 +18,6 @@ const NAV: Array<Array<{ to: string; label: string; icon: string; end?: boolean 
     { to: "/compare", label: "So sánh", icon: "compare" },
   ],
   [{ to: "/watchlist", label: "Theo dõi", icon: "star" }],
-  [{ to: "/methodology", label: "Phương pháp & dữ liệu", icon: "book" }],
 ];
 
 /** Tín Hiệu Sàn mark: a lighthouse whose beam is the early-warning signal. */

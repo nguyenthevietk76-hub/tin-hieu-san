@@ -69,7 +69,7 @@ export function Events() {
               "radar_su_kien.csv",
               rows.map((e) => ({
                 ma_su_kien: e.id, ma: e.t, ten: e.name ?? "", ngay: e.d, co_quan: AGENCY[e.ag] ?? e.ag,
-                bien_phap: MEASURE[e.m] ?? e.m, nhom: e.e, ly_do: e.why ?? "", can_cu: e.law ?? "",
+                bien_phap: MEASURE[e.m] ?? e.m, nhom: e.e.split(";").map((c) => E_SHORT[c] ?? c).join(", "), ly_do: e.why ?? "", can_cu: e.law ?? "",
                 so_van_ban: e.doc ?? "", url: e.urls.join(" ; "),
               })),
             )
@@ -101,7 +101,7 @@ export function Events() {
             <option value="">Mọi cơ quan</option>
             {Object.entries(AGENCY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <button className={`btn ${other ? "on" : ""}`} onClick={() => { setOther(!other); setPage(0); }} title="Gồm cả sự kiện không thuộc nhóm E1–E7 (VD: hủy niêm yết tự nguyện để chuyển sàn)">
+          <button className={`btn ${other ? "on" : ""}`} onClick={() => { setOther(!other); setPage(0); }} title="Gồm cả sự kiện không thuộc nhóm vi phạm nào (VD: hủy niêm yết tự nguyện để chuyển sàn)">
             Gồm sự kiện khác
           </button>
         </div>
@@ -109,7 +109,7 @@ export function Events() {
           <span className="xs faint" style={{ marginRight: 4 }}>NHÓM</span>
           {CODES.map((c) => (
             <button key={c} className={`btn ${codes.includes(c) ? "on" : ""}`} style={{ padding: "0 12px" }} onClick={() => toggle(c)}>
-              <ECode code={c} /> <span className="small">{E_SHORT[c]}</span>
+              <ECode code={c} />
             </button>
           ))}
           {codes.length > 0 && <button className="btn" onClick={() => setCodes([])}>Bỏ chọn</button>}

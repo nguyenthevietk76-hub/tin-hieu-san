@@ -542,13 +542,13 @@ function Structure() {
     const rows = stats.events_by_year.filter((r) => r.y >= 2014);
     const codes = ["E1", "E2", "E3", "E4", "E5", "E6", "E7"];
     return {
-      legend: { data: codes.map((c) => `${c} ${E_SHORT[c]}`), type: "scroll" },
+      legend: { data: codes.map((c) => E_SHORT[c]), type: "scroll" },
       grid: { left: 8, right: 8, top: 40, bottom: 4, containLabel: true },
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
       xAxis: { type: "category", data: rows.map((r) => String(r.y)) },
       yAxis: { type: "value" },
       series: codes.map((c) => ({
-        name: `${c} ${E_SHORT[c]}`,
+        name: E_SHORT[c],
         type: "bar",
         stack: "e",
         barMaxWidth: 28,

@@ -7,7 +7,7 @@ import { openChat } from "../components/Chat";
 import { Avatar, Card, Delta, ECode, ECodes, Loading, RiskBadge, Seg, Star, StatusBadge } from "../components/ui";
 import { useCompany, useMeta } from "../lib/data";
 import { fmtBn, fmtDate, fmtInt, fmtPct } from "../lib/format";
-import { AGENCY, DIRECTION, E_COLOR, E_SHORT, MEASURE, PDF_TYPE } from "../lib/labels";
+import { AGENCY, DIRECTION, E_COLOR, MEASURE, PDF_TYPE } from "../lib/labels";
 import type { CompanyDetail } from "../lib/types";
 
 type Tab = "overview" | "events" | "reports" | "fin";
@@ -59,7 +59,7 @@ export function CompanyPage() {
             <StatusBadge status={info.status} />
           </div>
           <div className="small faint" style={{ marginTop: 12 }}>
-            Dữ liệu {info.y0}–{info.y1} · {info.reports} báo cáo thường niên · {info.n_lab} sự kiện E1–E7
+            Dữ liệu {info.y0}–{info.y1} · {info.reports} báo cáo thường niên · {info.n_lab} sự kiện vi phạm
             {data.delist?.last_trade && <> · GD cuối {data.delist.last_trade}</>}
           </div>
           <button
@@ -176,7 +176,7 @@ function Overview({ d }: { d: CompanyDetail }) {
         {mm?.oos.auc && (
           <div className="xs faint mt">
             Độ chính xác mô hình kiểm định ngoài mẫu 2019–2024: AUC {mm.oos.auc.toFixed(2)}, nhóm 10% rủi ro cao nhất
-            có tỷ lệ vi phạm gấp {mm.oos.top10_lift?.toFixed(1)} lần trung bình. <Link to="/methodology">Chi tiết</Link>
+            có tỷ lệ vi phạm gấp {mm.oos.top10_lift?.toFixed(1)} lần trung bình.
           </div>
         )}
       </Card>
@@ -245,7 +245,6 @@ function EventTimeline({ d }: { d: CompanyDetail }) {
             </div>
             <div className="tl-title">{e.title}</div>
             {e.why && <div className="tl-body">{e.why}</div>}
-            {e.e && <div className="xs faint" style={{ marginTop: 4 }}>{e.e.split(";").map((c) => E_SHORT[c]).join(" · ")}</div>}
             <div className="links">
               {e.doc && <span className="xs mono faint">{e.doc}</span>}
               {e.urls.map((u, i) => (

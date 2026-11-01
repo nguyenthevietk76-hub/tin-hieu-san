@@ -246,7 +246,7 @@ kbd {
 .b-accent { background: transparent; border-color: var(--border-strong); color: var(--text); }
 .b-status { background: transparent; border-color: var(--border-strong); color: var(--text); }
 .b-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
-.ecode {
+.ecode { white-space: nowrap;
   font-size: 10.5px; font-weight: 700; padding: 0 5px; height: 18px; border-radius: 3px; display: inline-flex; align-items: center;
   color: var(--text); background: transparent; box-shadow: inset 0 0 0 1px var(--border-strong); letter-spacing: .02em;
 }
