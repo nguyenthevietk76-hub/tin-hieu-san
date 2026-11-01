@@ -59,7 +59,7 @@ export function CompanyPage() {
             <StatusBadge status={info.status} />
           </div>
           <div className="small faint" style={{ marginTop: 12 }}>
-            Dữ liệu {info.y0}–{info.y1} · {info.reports} báo cáo thường niên · {info.n_lab} sự kiện vi phạm
+            {info.n_lab} sự kiện vi phạm
             {data.delist?.last_trade && <> · GD cuối {data.delist.last_trade}</>}
           </div>
           <button
@@ -127,7 +127,7 @@ function ScoreTiles({ d }: { d: CompanyDetail }) {
         {tile("Rủi ro tài chính", p2, pr2, ref?.pct_Y2)}
       </div>
       <div className="xs faint" style={{ marginTop: 8, textAlign: "right" }}>
-        {info.listed ? `Đánh giá tại ${fmtDate(d.live?.as_of)}` : `Đánh giá năm tài chính ${last?.fiscal_year}`} · thang 0–100
+        {info.listed ? "Điểm hiện tại" : `Đánh giá năm tài chính ${last?.fiscal_year}`} · thang 0–100
       </div>
     </div>
   );
@@ -347,8 +347,7 @@ function Financials({ d }: { d: CompanyDetail }) {
       <Card>
         <div className="empty">
           <Icon name="info" size={22} />
-          <p>Nguồn dữ liệu chưa có BCTC năm của doanh nghiệp này.</p>
-          <p className="small">Nguồn bên ngoài chỉ có BCTC từ năm 2018 và thiếu số liệu của một số doanh nghiệp đã hủy niêm yết.</p>
+          <p>Chưa có BCTC năm của doanh nghiệp này.</p>
         </div>
       </Card>
     );
@@ -356,7 +355,7 @@ function Financials({ d }: { d: CompanyDetail }) {
   return (
     <Card
       title="Chỉ tiêu tài chính chính"
-      sub="Đơn vị: tỷ đồng · nguồn Vietcap (VCI), bên thứ ba, chưa đối chiếu với BCTC gốc · dòng dưới năm là ngày công bố"
+      sub="Đơn vị: tỷ đồng · dòng dưới năm là ngày công bố"
       action={<Link className="btn" to="/finance"><Icon name="trend" />So với toàn thị trường</Link>}
       pad={false}
     >

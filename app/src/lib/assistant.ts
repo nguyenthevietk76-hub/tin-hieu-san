@@ -79,7 +79,6 @@ function findExchange(f: string): "HOSE" | "HNX" | null {
 }
 
 const firm = (c: Company) => `**${c.t}** – ${c.name}`;
-const asOf = (d: Data) => `Dữ liệu tới ${fmtDate(d.meta.as_of)}.`;
 
 export async function ask(question: string, contextTicker: string | null): Promise<Reply> {
   const d = await data();
@@ -159,7 +158,7 @@ async function company(t: string, d: Data): Promise<Reply> {
     );
     if (fr.flag) lines.push(`Cảnh báo ngưỡng hủy niêm yết: **${fr.flag === "breach" ? "chạm ngưỡng" : "tiệm cận"}** (${fr.why.join("; ")}).`);
   }
-  lines.push("", `${c.listed ? `Điểm tính tại ${fmtDate(det.live?.as_of)}. ` : ""}Đây là ước lượng thống kê, không phải khuyến nghị đầu tư.`);
+  lines.push("", `Đây là ước lượng thống kê, không phải khuyến nghị đầu tư.`);
   const sources: Source[] = [{ label: `Hồ sơ ${t}`, href: `#/c/${t}` }];
   if (ev[0]?.urls[0]) sources.push({ label: `Văn bản ${ev[0].doc ?? fmtDate(ev[0].d)}`, href: ev[0].urls[0] });
   return { text: lines.join("\n"), sources };
@@ -224,7 +223,7 @@ function ranking(f: string, ind: string | null, ex: string | null, d: Data): Rep
       `Các doanh nghiệp đang niêm yết có **rủi ro ${fin ? "tài chính" : "tuân thủ"}** cao nhất${sc ? ` (${sc})` : ""}:`,
       ...listLines(rows, (c) => `${n0(fin ? c.pct2 : c.pct1)} điểm, xác suất 12 tháng ${fmtPct(fin ? c.p2 : c.p1)}${c.status ? `, ${c.status.toLowerCase()}` : ""}`),
       "",
-      `${asOf(d)} ${fin ? "" : 'Hỏi thêm "rủi ro tài chính cao nhất" để xem nhóm tài chính.'}`.trim(),
+      `${fin ? "" : 'Hỏi thêm "rủi ro tài chính cao nhất" để xem nhóm tài chính.'}`.trim(),
     ].join("\n"),
     sources: [{ label: "Bộ sàng lọc rủi ro", href: "#/screener" }],
   };
@@ -240,8 +239,6 @@ function status(ind: string | null, ex: string | null, d: Data): Reply {
       `Hiện có **${rows.length} doanh nghiệp**${sc ? ` (${sc})` : ""} đang bị xử lý: ${Object.entries(by).map(([k, v]) => `${k.toLowerCase()} ${v}`).join(", ")}.`,
       "Rủi ro tuân thủ cao nhất trong nhóm này:",
       ...listLines([...rows].sort((a, b) => (b.p1 ?? 0) - (a.p1 ?? 0)).slice(0, 8), (c) => `${c.status}, ${n0(c.pct1)} điểm`),
-      "",
-      `Danh sách diện cảnh báo/kiểm soát chụp ngày ${fmtDate(d.meta.sources?.listing)}.`,
     ].join("\n"),
     sources: [{ label: "Bộ sàng lọc rủi ro", href: "#/screener" }],
   };
@@ -257,8 +254,6 @@ function thresholds(ind: string | null, ex: string | null, d: Data): Reply {
       ? [
           `Có **${rows.length} doanh nghiệp đang niêm yết**${sc ? ` (${sc})` : ""} chạm hoặc tiệm cận ngưỡng hủy niêm yết bắt buộc theo Nghị định 155/2020 (vốn chủ âm, lỗ lũy kế vượt vốn góp, lỗ 3 năm liên tiếp):`,
           ...rows.slice(0, 10).map(line),
-          "",
-          "Tính trên BCTC năm gần nhất theo số liệu Vietcap, chưa đối chiếu BCTC kiểm toán gốc.",
         ].join("\n")
       : `Không có doanh nghiệp đang niêm yết nào${sc ? ` (${sc})` : ""} chạm hoặc tiệm cận ngưỡng hủy niêm yết theo BCTC năm gần nhất.`,
     sources: [{ label: "Sức khỏe tài chính", href: "#/finance" }],
@@ -295,7 +290,7 @@ async function events(f: string, ind: string | null, d: Data): Promise<Reply> {
   const list = ev.slice(0, 6);
   return {
     text: [
-      `Có **${ev.length} sự kiện xử lý**${sc ? ` (${sc})` : ""}.${year ? "" : ` Theo năm: ${years.map((y) => `${y}: ${byYear[y]}`).join(", ")} (năm hiện tại tính tới ${fmtDate(d.meta.as_of)}).`}`,
+      `Có **${ev.length} sự kiện xử lý**${sc ? ` (${sc})` : ""}.${year ? "" : ` Theo năm: ${years.map((y) => `${y}: ${byYear[y]}`).join(", ")}.`}`,
       list.length ? "Gần nhất:" : "",
       ...list.map((e) => `- ${fmtDate(e.d)} · **${e.t}**: ${MEASURE[e.m] ?? e.m} – ${e.e.split(";").map((k) => E_SHORT[k]).join(", ")}${e.why ? `. ${e.why.length > 140 ? `${e.why.slice(0, 140)}…` : e.why}` : ""}`),
     ]

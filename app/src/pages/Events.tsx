@@ -55,7 +55,7 @@ export function Events() {
     <>
       <div className="page-head">
         <div>
-          <div className="eyebrow">Nguồn sự kiện</div>
+          <div className="eyebrow">Sự kiện</div>
           <h1>Sự kiện xử lý</h1>
           <p>
             Quyết định cảnh báo, kiểm soát, hạn chế, tạm ngừng giao dịch, xử phạt và hủy niêm yết – mỗi sự kiện kèm số

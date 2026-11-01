@@ -138,7 +138,6 @@ export function Finance() {
             BCTC năm gần nhất đã công bố của từng doanh nghiệp, đối chiếu với ngưỡng <strong>hủy niêm yết bắt buộc</strong> theo
             Nghị định 155/2020/NĐ-CP: vốn chủ sở hữu âm, lỗ lũy kế vượt vốn góp, hoặc lỗ 3 năm liên tiếp.{" "}
             <strong style={{ color: "var(--yellow)" }}>Tiệm cận</strong>: lỗ 2 năm liên tiếp hoặc lỗ lũy kế từ 50% vốn góp.
-            Số liệu từ Vietcap (VCI), chưa đối chiếu với BCTC kiểm toán gốc; chỉ dùng để sàng lọc.
           </p>
         </div>
         <button
@@ -277,7 +276,7 @@ export function Finance() {
         )}
       </Card>
       <p className="xs faint mt">
-        Đơn vị: tỷ đồng. LNST là lợi nhuận sau thuế hợp nhất theo nguồn; quy định xét lỗ trên BCTC kiểm toán, nên kết quả ở
+        Đơn vị: tỷ đồng. LNST là lợi nhuận sau thuế hợp nhất; quy định xét lỗ trên BCTC kiểm toán, nên kết quả ở
         đây có thể khác kết luận chính thức của Sở Giao dịch. Số năm lỗ liên tiếp chỉ đếm từ năm tài chính 2018.
       </p>
     </>

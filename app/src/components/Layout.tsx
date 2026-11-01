@@ -3,9 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Icon } from "./Icon";
 import { CommandPalette } from "./CommandPalette";
 import { ChatWidget } from "./Chat";
-import { useMeta } from "../lib/data";
 import { useTheme, useWatchlist } from "../lib/store";
-import { fmtDate } from "../lib/format";
 
 // Navigation lives in a drop-down behind the menu button so pages get the full width.
 const NAV: Array<Array<{ to: string; label: string; icon: string; end?: boolean }>> = [
@@ -37,7 +35,6 @@ export function Layout() {
   const [menu, setMenu] = useState(false);
   const { theme, set } = useTheme();
   const { list } = useWatchlist();
-  const { data: meta } = useMeta();
   const loc = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -103,11 +100,6 @@ export function Layout() {
                   ))}
                 </div>
               ))}
-              {meta && (
-                <div className="menu-foot">
-                  Dữ liệu tới {fmtDate(meta.as_of)} · {meta.counts.tickers} DN · HOSE, HNX {meta.counts.years[0]}–{meta.counts.years[1]}
-                </div>
-              )}
             </nav>
           )}
         </div>

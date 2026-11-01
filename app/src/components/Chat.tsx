@@ -1,8 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "./Icon";
 import { ask, EXAMPLES, type Source } from "../lib/assistant";
-import { useMeta } from "../lib/data";
-import { fmtDate } from "../lib/format";
 
 // Question box over the site's data, answered in the browser by the rule-based
 // assistant (lib/assistant.ts). The conversation lives in sessionStorage, so it
@@ -77,7 +75,6 @@ export function ChatWidget() {
   const [state, setState] = useState<State>(load);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const { data: meta } = useMeta();
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -236,7 +233,7 @@ export function ChatWidget() {
               </button>
             </div>
             <div className="xs faint chat-note">
-              Trả lời tự động theo mẫu từ dữ liệu của web{meta ? ` (tới ${fmtDate(meta.as_of)})` : ""}, không dùng AI. Không phải
+              Trả lời tự động theo mẫu từ dữ liệu của web, không dùng AI. Không phải
               khuyến nghị đầu tư.
             </div>
           </form>

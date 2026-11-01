@@ -92,9 +92,6 @@ export function Dashboard() {
     <>
       <div className="mk-hero">
         <h1>Rủi ro niêm yết, toàn cảnh</h1>
-        <p className="muted">
-          {meta ? `${fmtInt(meta.counts.tickers)} doanh nghiệp · ${fmtInt(meta.counts.events)} sự kiện xử lý · dữ liệu tới ${fmtDate(meta.as_of)}` : "…"}
-        </p>
         <Seg value={ex} options={[["all", "Tất cả sàn"], ["HOSE", "HOSE"], ["HNX", "HNX"]]} onChange={setEx} />
       </div>
 
@@ -535,7 +532,6 @@ function EventCalendar({ events, byT, inEx }: { events: EventRec[]; byT: Map<str
 // ------------------------------------------------------------------ 7. composition charts
 function Structure() {
   const { data: stats } = useStats();
-  const { data: meta } = useMeta();
 
   const eventsYear = useMemo(() => {
     if (!stats) return null;
@@ -585,7 +581,7 @@ function Structure() {
       <div>
         <SectionHead id="co-cau-nam" title="Sự kiện theo năm và nhóm" />
         <div className="mk-chart">
-          <div className="xs faint" style={{ marginBottom: 6 }}>Năm {meta ? new Date(meta.as_of).getFullYear() : ""} tính tới {fmtDate(meta?.as_of)} · một sự kiện có thể thuộc nhiều nhóm</div>
+          <div className="xs faint" style={{ marginBottom: 6 }}>Một sự kiện có thể thuộc nhiều nhóm</div>
           {eventsYear ? <Chart option={eventsYear} height={300} /> : <Loading h={300} />}
         </div>
       </div>
